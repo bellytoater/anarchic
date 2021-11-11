@@ -1,4 +1,4 @@
-﻿import asyncio
+import asyncio
 import discord
 from discord.ext import commands, tasks
 import datetime
@@ -444,7 +444,6 @@ temp = {
 "mafias" : ["Framer", "Consort", "Consigliere"],
 "cults" : ["Cult Leader", "Ritualist"],
 "neutrals" : ["Headhunter", "Jester"],
-"nk" : ["Psychopath"],
 "investigatives" : ["Cop", "Detective", "Lookout"],
 "comps" : {"enforced": ["Enforcer", "Doctor", "Mafioso", "RT", "RN"], "classic":["Cop", "Doctor", "Mayor", "Jester", "Mafioso"], "execution":["Cop", "Doctor", "RT", "RT", "Headhunter", "Mafioso"], "legacy":["Cop", "Doctor", "RT", "RT", "RT", "RN", "Mafioso", "RM"], "scattered":["Enforcer", "Doctor", "RT", "RT", "RT", "Mafioso", "RM", "Headhunter"], "duet": ["Enforcer", "Doctor", "TI", "RT", "RT", "Mafioso", "Consort"], "framed": ["Lookout", "Doctor", "TI", "RT", "RT", "Mafioso", "Framer"], "anarchy": ["Mayor", "Doctor", "TI", "TI", "RT", "RT", "Mafioso", "RM", "RN", "A"], "ranked": ["Doctor", "Enforcer", "TI", "TI", "RT", "RT", "RT", "Mafioso", "Consort", "Framer"], "truth" : ["Detective", "Doctor", "RT", "RT", "RT", "Mafioso", "Consigliere"],"delta":["Psychopath", "Tracker", "Mafioso"], "custom" : []},
 "data" : {},
@@ -473,7 +472,7 @@ temp = {
 "mayor" : None,
 "channel" : None,
 "itememoji" : {"Cop Shard" : "<:copshard:896804869820801115>", "Doctor Shard" : "<:docshard:896576968756191273>", "Enforcer Shard" : "<:enfshard:896576814942670899>" ,"Detective Shard" : "<:detshard:896760012729356331>", "Lookout Shard" : "<:loshard:896577050645786655>", "Epic Programmer Trophy" : ":computer:", "Epic Designer Trophy" : ":video_game:", "Epic Artist Trophy" : ":art:", "Mafioso Shard" : "<:mafshard:896801052945449031>", "Headhunter Shard" : "<:hhicon:896903989285777428>", "Jester Shard" : "<:jestshard:896900933307469875>", "Consigliere Shard" : "<:consigshard:896910618051878982>", "Framer Shard" : "<:frameshard:896910673370558464>", "Psychic Shard" : "<:psyshard:896842380618108938>", "Mayor Shard" : "<:mayorshard:897570664209338369>", "Consort Shard" : "<:consshard:896823151307157535>", "Detective Shard" : "<:detshard:896760012729356331>", "Lookout" : "<:loshard:896577050645786655>"},
-"emoji" : {"cop": "<:copicon2:889672912905322516>", "doctor": "<:docicon2:890333203959787580>", "mafioso": "<:maficon2:891739940055052328>", "enforcer": "<:enficon2:890339050865696798>", "lookout": "<:loicon2:889673190392078356>", "psychopath" : "<:mario:901229374500655135>", "consort": "<:consicon2:890336628269281350>", "jester": "<:jesticon2:889968373612560394>", "headhunter": "<:hhicon2:891429754643808276>", "mayor": "<:mayoricon2:897570023143518288>", "detective":"<:deticon2:889673135438319637>", "framer": "<:frameicon2:890365634913902602>", "psychic": "<:psyicon2:896159311078780938>", "consigliere" : "<:consigicon2:896154845130666084>", "tracker" : "<:mario:901229374500655135>", "rt": "<:townicon2:896431548717473812>", "rm": "<:maficon2:890328238029697044>", "rn": ":axe:", "ti": ":mag_right:", "ts": "🛠️"},
+"emoji" : {"cop": "<:copicon2:889672912905322516>", "doctor": "<:docicon2:890333203959787580>", "mafioso": "<:maficon2:891739940055052328>", "enforcer": "<:enficon2:890339050865696798>", "lookout": "<:loicon2:889673190392078356>", "psychopath" : "<:mario:901229374500655135>", "consort": "<:consicon2:890336628269281350>", "jester": "<:jesticon2:889968373612560394>", "headhunter": "<:hhicon2:891429754643808276>", "mayor": "<:mayoricon2:897570023143518288>", "detective":"<:deticon2:889673135438319637>", "framer": "<:frameicon2:890365634913902602>", "psychic": "<:psyicon2:896159311078780938>", "consigliere" : "<:consigicon2:896154845130666084>", "tracker" : "<:mario:901229374500655135>", "rt": "<:townicon2:896431548717473812>", "rm": "<:maficon2:890328238029697044>", "rn": ":axe:", "ti": ":mag_right:", "ts": "🛠️", "a" : ":game_die:"},
 "result" : False,
 "targetint" : 0,
 "vkickd" : {},
@@ -581,9 +580,28 @@ async def on_command_error(ctx, error):
 
     raise error
 
-@bot.command()
+@slash.slash_command(
+    name="ping",
+    description="Get the latency of the bot"
+)
 async def ping(ctx):
-    await ctx.reply(f"Pong! {round(bot.latency, 1)}ms :ping_pong:")
+    latency = bot.latency * 1000
+    emb = discord.Embed(title="Pinging...", color=discord.Color.blue())
+
+    emb.add_field(name="Discord WS:", value=f"```yaml\n{str(round(latency))}ms```", inline=False)
+    emb.add_field(name = "**Typing**", value = "```yaml\n...```", inline = True)
+    emb.add_field(name = "**Message**", value = "```yaml\n...```", inline = True)
+
+    before = time.monotonic()
+    message = await ctx.reply(embed=emb)
+    ping = (time.monotonic() - before) * 1000
+
+    emb.title = "**Pong!**"
+    emb.set_field_at(1, name = "**Message:**", value = f"```yaml\n{str(int((message.created_at - ctx.message.created_at).total_seconds() * 1000))}ms```", inline = True)
+    emb.set_field_at(
+            2, name = "**Typing:**", value = f"```yaml\n{str(round(ping))}ms```", inline = True)
+
+    await message.edit(embed = emb)
 
 @bot.command()
 async def help(ctx):
@@ -1769,16 +1787,17 @@ async def _party(ctx, sla=False):
             elif (i == "RM"):
                 message += f"**Random Mafia** {em[i.lower()]}\n"
             elif (i == "RN"):
-                message += f"**Neutral Evil** {em[i.lower()]}\n"
+                message += f"**Random Neutral** {em[i.lower()]}\n"
             elif (i == "TI"):
                 message += f"**Town Investigative** {em[i.lower()]}\n"
             elif (i == "TS"):
                 message += f"**Town Support** {em[i.lower()]}\n"
-            elif (i == "NK"):
-                message += f"**Neutral Killing :dagger:**\n"
             else:
                 message += f"**{string.capwords(i)}** {em[i.lower()]}\n"
         
+        if (message == ""):
+            message = "This setup is empty."
+
         s = var[ctx.guild.id]["setupz"]
         embed.add_field(name=f"Current Setup :tada:: `{string.capwords(s)}`", value=message)
     else:
@@ -1986,7 +2005,6 @@ async def _start(ctx, inter=False):
         return
 
     s = var[ctx.guild.id]["setupz"]
-
     if (s.lower() != "custom"):
         if (4 >= len(var[ctx.guild.id]["players"]) and s.lower() == "any"):
             if (inter == True):
@@ -2014,9 +2032,8 @@ async def _start(ctx, inter=False):
                     return
     else:
         c = var[ctx.guild.id]["comps"]
-        print(len(c["custom"]))
-        if (len(c["custom"]) < 5):
-            await ctx.reply("The setup is too small to be playable! There should at least 5 roles in the setup.", ephemeral=True)
+        if (len(c["custom"]) < 2):
+            await ctx.reply("The setup is too small to be playable! There should at least 2 roles in the setup.", ephemeral=True)
             return
 
         if ("Mafioso" not in c["custom"]):
@@ -2037,7 +2054,7 @@ async def _start(ctx, inter=False):
             else:
                 await ctx.send(f"There aren't enough players in the game! There should be {len(c[s])} players.")
             return
-            
+
     if (inter == True):
         await ctx.reply(type=5)
 
@@ -4016,7 +4033,7 @@ async def voteMember(ctx, member=None):
     name="end",
     description="Finalize the game to start a new one"
 )
-async def endd(ctx:SlashInteraction):
+async def endGame(ctx:SlashInteraction):
 
     try:
         var[ctx.guild.id]["test"]
@@ -4484,11 +4501,15 @@ async def _setup(ctx, setup:str, inter=False):
                 else:
                     message += f"{i}\n"
 
+            if (message == ""):
+                message = "The setup is empty."
+
             embed.add_field(name=f"__**{string.capwords(setup)} 🚩 **__", value=message)
 
         if (embed.title == "Something's wrong here..." and inter == True):
             await ctx.reply(embed=embed, ephemeral=True)
 
+        
         await ctx.reply(embed=embed)
 
         var[ctx.guild.id]["setupz"] = setup
@@ -4526,36 +4547,156 @@ async def custom(inter):
     guild_ids=[871525831422398494]
 )
 async def viewCustom(inter):
-    embed = discord.Embed(title=f"**Your current custom setup :triangular_flag_on_post:__**", colour=discord.Colour(0xcd95ff))
+    try:
+        var[inter.guild.id]["test"]
+    except:
+        var[inter.guild.id] = copy.deepcopy(temp)
+
+    embed = discord.Embed(title=f"**Your current custom setup :art::paintbrush:**", colour=discord.Colour(0xb3ffdd))
 
     embed.set_footer(text="You don't get silvers in a custom setup.", icon_url=inter.author.avatar_url)
     message = ""
     c = var[inter.guild.id]["comps"]
+    em = var[inter.guild.id]["emoji"]
+
     for i in c["custom"]:
         if (i == "RT"):
-            message += "Random Town\n"
+            message += "Random Town <:townicon2:896431548717473812>\n"
         elif (i == "RM"):
-            message += "Random Mafia\n"
-        elif (i == "RN"):
-            message += "Neutral Evil\n"
+            message += "Random Mafia <:maficon2:890328238029697044>\n"
+        elif (i == "NE"):
+            message = "Neutral Evil :axe:\n"
         elif (i == "TI"):
-            message += "Town Investigative\n"
+            message = "Town Investigative :mag_right:\n"
         elif (i == "TS"):
-            message += f"**Town Support**\n"
+            message = f"**Town Support 🛠️**\n"
+        elif (i == "NK"):
+            message = f"**Neutral Killing :dagger:**\n"
         elif (i == "A"):
-            message += "Any\n"
+            message = "**Any** :game_die:\n"
         else:
-            message += f"{i}\n"
+            message += f"**{i}** {em[i.lower()]}\n"
 
-    embed.add_field(name=f"__**Custom 🚩 **__", value=message)
-    await inter.reply(embed=embed)
+    if (message == ""):
+        message = "The setup is empty."
+
+    embed.add_field(name=f"__**Custom :art::paintbrush: `(?P)`**__", value=message)
+
+    try:
+        await inter.reply(embed=embed)
+    except:
+        await inter.reply("The custom setup is empty.", ephemeral=True)
 
 @dislash.guild_only()
 @custom.sub_command(
-    name="add",
     description="Add a role to your setup",
     options=[
-        Option("role", "The role you want to add", OptionType.STRING, True, options=[
+        Option("role", "The role you want to add", OptionType.STRING, True, choices=[
+            OptionChoice("Cop", "Cop"),
+            OptionChoice("Detective", "Detective"),
+            OptionChoice("Lookout", "Lookout"),
+            OptionChoice("Doctor", "Doctor"),
+            OptionChoice("Enforcer", "Enforcer"),
+            OptionChoice("Mayor", "Mayor"),
+            OptionChoice("Tracker", "Tracker"),
+            OptionChoice("Psychic", "Psychic"),
+            OptionChoice("Mafioso", "Mafioso"),
+            OptionChoice("Consigliere", "Consigliere"),
+            OptionChoice("Framer", "Framer"),
+            OptionChoice("Consort", "Consort"),
+            OptionChoice("Headhunter", "Headhunter"),
+            OptionChoice("Jester", "Jester"),
+            OptionChoice("Psychopath", "Psychopath"),
+            OptionChoice("Random Town", "RT"),
+            OptionChoice("Town Investigative", "TI"),
+            OptionChoice("Town Support", "TS"),
+            OptionChoice("Neutral Evil", "NE"),
+            OptionChoice("Neutral Killing", "NK"),
+            OptionChoice("Random Mafia", "RM"),
+            OptionChoice("Any", "A")
+        ])
+    ],
+    guild_ids=[871525831422398494]
+)
+async def add(inter, role=None):
+    try:
+        var[inter.guild.id]["test"]
+    except:
+        var[inter.guild.id] = copy.deepcopy(temp)
+
+    try:
+        if (inter.author.id != var[inter.guild.id]["players"][0]):
+            await inter.reply("Only the host can add roles to a custom setup.", ephemeral=True)
+            return
+    except:
+        await inter.reply("The game is empty.", ephemeral=True)
+        return
+
+    
+
+    c = var[inter.guild.id]["comps"]
+
+    if (c["custom"].count("Mafioso") == 1 and role == "Mafioso"):
+        await inter.reply("There can't be more than 1 Mafioso in a game.", ephemeral=True)
+        return
+    if (c["custom"].count("Mayor") == 1 and role == "Mayor"):
+        await inter.reply("There can't be more than 1 Mayor in a game.", ephemeral=True)
+        return
+        
+    c["custom"].append(str(role))
+
+    c = var[inter.guild.id]["comps"]
+
+    message = ""
+    thing = ""
+    em = var[inter.guild.id]["emoji"]
+
+    for i in c["custom"]:
+        if (i == "RT"):
+            message += "Random Town <:townicon2:896431548717473812>\n"
+        elif (i == "RM"):
+            message += "Random Mafia <:maficon2:890328238029697044>\n"
+        elif (i == "NE"):
+            message = "Neutral Evil :axe:\n"
+        elif (i == "TI"):
+            message = "Town Investigative :mag_right:\n"
+        elif (i == "TS"):
+            message = f"**Town Support 🛠️**\n"
+        elif (i == "NK"):
+            message = f"**Neutral Killing :dagger:**\n"
+        elif (i == "A"):
+            message = "Any :game_die:\n"
+        else:
+            message += f"{i} {em[i.lower()]}\n"
+
+    if (role == "RT"):
+        thing = "Random Town <:townicon2:896431548717473812>"
+    elif (role == "RM"):
+        thing = "Random Mafia <:maficon2:890328238029697044>"
+    elif (role == "NE"):
+        thing = "Neutral Evil :axe:"
+    elif (role == "TI"):
+        thing = "Town Investigative :mag_right:"
+    elif (role == "TS"):
+        thing = f"**Town Support 🛠️**"
+    elif (role == "NK"):
+        thing = f"**Neutral Killing :dagger:**"
+    elif (role == "A"):
+        thing = "Any :game_die:"
+    else:
+        thing += f"{i}"
+
+    embed = discord.Embed(title=f"{thing} has been added to the setup!", colour=discord.Colour(0xb3ffdd), description=f"__**Custom :art::paintbrush: `(?P)`**__\n**{message}**")
+
+    embed.set_footer(text="You need at least 2 roles for a custom setup.", icon_url=inter.author.avatar_url)
+
+    await inter.create_response(embed=embed)
+
+@dislash.guild_only()
+@custom.sub_command(
+    description="Remove a role to your setup",
+    options=[
+        Option("role", "The role you want to remove", OptionType.STRING, True, choices=[
             OptionChoice("Cop", "Cop"),
             OptionChoice("Detective", "Detective"),
             OptionChoice("Lookout", "Lookout"),
@@ -4581,15 +4722,73 @@ async def viewCustom(inter):
     ],
     guild_ids=[871525831422398494]
 )
-async def addCustom(inter):
+async def remove(inter, role=None):
+    try:
+        var[inter.guild.id]["test"]
+    except:
+        var[inter.guild.id] = copy.deepcopy(temp)
+
     try:
         if (inter.author.id != var[inter.guild.id]["players"][0]):
-            await inter.reply("Only the host can add roles to a custom setup.", ephemeral=True)
+            await inter.reply("Only the host can remove roles to a custom setup.", ephemeral=True)
     except:
         await inter.reply("The game is empty.", ephemeral=True)
 
     c = var[inter.guild.id]["comps"]
-    c["custom"]
+
+    if (role not in c["custom"]):
+        await inter.reply("That role isn't in the setup.")
+        return
+
+    c["custom"].remove(str(role))
+
+    em = var[inter.guild.id]["emoji"]
+    message = ""
+    thing = ""
+
+    for i in c["custom"]:
+        if (i == "RT"):
+            message += "Random Town <:townicon2:896431548717473812>\n"
+        elif (i == "RM"):
+            message += "Random Mafia <:maficon2:890328238029697044>\n"
+        elif (i == "NE"):
+            message = "Neutral Evil :axe:\n"
+        elif (i == "TI"):
+            message = "Town Investigative :mag_right:\n"
+        elif (i == "TS"):
+            message = f"**Town Support 🛠️**\n"
+        elif (i == "NK"):
+            message = f"**Neutral Killing :dagger:**\n"
+        elif (i == "A"):
+            message = "**Any** :game_die:\n"
+        else:
+            message += f"**{i}** {em[i.lower()]}\n"
+
+    if (role == "RT"):
+        thing = "**Random Town** <:townicon2:896431548717473812>"
+    elif (role == "RM"):
+        thing = "**Random Mafia** <:maficon2:890328238029697044>"
+    elif (role == "NE"):
+        thing = "**Neutral Evil** :axe:"
+    elif (role == "TI"):
+        thing = "**Town Investigative** :mag_right:"
+    elif (role == "TS"):
+        thing = f"**Town Support 🛠️**"
+    elif (role == "NK"):
+        thing = f"**Neutral Killing :dagger:**"
+    elif (role == "A"):
+        thing = "**Any** :game_die:"
+    else:
+        thing = f"**{i}**"
+
+    if (message == ""):
+        message = "The setup is empty."
+
+    embed = discord.Embed(title=f"{thing} has been removed from the setup", colour=discord.Colour(0xffc6c6), description=f"__**Custom :art::paintbrush: `(?P)`**__\n{message}")
+
+    embed.set_footer(text="You need at least 2 roles in a custom setup.", icon_url=inter.author.avatar_url)
+
+    await inter.create_response(embed=embed)
 
 @dislash.guild_only()
 @slash.slash_command(
@@ -5442,7 +5641,7 @@ async def results(ctx, targ, g):
             user = bot.get_user(targ)
             embed = discord.Embed(title="**You were attacked by a member of the Mafia <:maficon2:890328238029697044>.**", colour=discord.Colour(0xd0021b), description="**You have died <:rip:878415658885480468>**.")
 
-            embed.set_thumbnail(url="https://media.discordapp.net/attachments/765738640554065962/871849580533268480/unknown.png?width=744&height=634")
+            embed.set_thumbnail(url="https://cdn.discordapp.com/emojis/890328238029697044.png?size=80")
             embed.set_footer(text="Rest in peace.", icon_url=user.avatar_url)
             await user.send(embed=embed)
         else:
@@ -5543,7 +5742,7 @@ async def results(ctx, targ, g):
         if (Player.get_player(targ.id, var[ctx]["playerdict"]).role == "Psychopath" and Player.get_player(targ.id, var[ctx]["playerdict"]).cautious == False):
             k = Player.get_player(ctx.id, var[ctx]["playerdict"])
             k.dead = True
-            k.deathreason = DeathReason.Psychopath
+            k.deathreason.append(DeathReason.Psychopath)
             k.will = []
             k.will.append("Their last will was too bloody to be read.")
 
@@ -6811,7 +7010,7 @@ async def attack(me, member:discord.User, ctx):
                         if (Player.get_player(me, var[ctx]["playerdict"]).role == "Psychopath" and Player.get_player(me, var[ctx]["playerdict"]).cautious == False):
                             k = Player.get_player(member.id, var[ctx]["playerdict"])
                             k.dead = True
-                            k.deathreason = DeathReason.Psychopath
+                            k.deathreason.append(DeathReason.Psychopath)
                             k.will = []
                             k.will.append("Their last will was too bloody to be read.")
 
@@ -6852,7 +7051,7 @@ async def attack(me, member:discord.User, ctx):
                         if (Player.get_player(me, var[ctx]["playerdict"]).role == "Psychopath" and Player.get_player(me, var[ctx]["playerdict"]).cautious == False):
                             k = Player.get_player(member.id, var[ctx]["playerdict"])
                             k.dead = True
-                            k.deathreason = DeathReason.Psychopath
+                            k.deathreason.append(DeathReason.Psychopath)
                             k.will = []
                             k.will.append("Their last will was too bloody to be read.")
 
@@ -6947,6 +7146,6 @@ async def supergive(ctx, user:discord.Member, amount):
 
 
 try:
-    bot.run("ODg3MTE4MzA5ODI3NDMyNDc4.YT_fTg.fgICX1Wb3ofxNOo67wYnzPA8mH8")
+    bot.run(os.environ("TOKEN"))
 except aiohttp.client_exceptions.ClientConnectorError:
     print("when you realize the wifi failed")
