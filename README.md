@@ -110,3 +110,37 @@ A skilled deceiver who sets investigations astray.
 - Frames last until an investigation is preformed on your target
 - Framed players show as **Suspicious** to a **Cop**
 - Framed players show as **Framer**, **Jester** or **Mayor** to a **Detective**.
+
+### Consigliere :magnet:
+**Faction: Mafia**
+A corrupted detective who gathers information for the mafia.
+
+- Investigate a player each night
+- You will learn your target's exact role
+
+### Consort :revolving_hearts:
+**Faction: Mafia**
+A hooker who works for organized crime
+
+- Distract a player each night
+- You are immune to **distractions**
+
+## Neutral 🪓
+The neutrals. They are their own faction, and they have their own win condition.
+
+### Jester :clown_face:
+**Faction: Neutral**
+A crazed lunatic who wants to be publicly executed
+
+**Your goal: Get yourself lynched :axe:**
+
+When you are lynched:
+- You will **distract** all of your guilty or abstaining voter the night following your lynch
+- You will **passively** attack a guilty or abstaining voter the night following your lynch.
+
+### Headhunter :axe:
+An obsessed executioner who wants a certain someone killed in front of the town.
+
+**You will be assigned a player that is a member of the Town :house:. Your goal is to get them lynched, not kill them.**
+
+- If your target is killed at night, you will become a **Jester** :clown_face:
