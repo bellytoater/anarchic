@@ -1,7 +1,11 @@
 # Anarchic
-A feature rich Discord bot including party, economy, and voting features with 13 [Roles](#roles)!
+A feature rich Discord bot including party, economy, and voting features with 13 [roles](#roles)!
 
-### Invite [here](https://discord.com/api/oauth2/authorize?client_id=887118309827432478&permissions=105696980048&scope=bot%20applications.commands)
+### Invite the bot [here](https://discord.com/api/oauth2/authorize?client_id=887118309827432478&permissions=105696980048&scope=bot%20applications.commands)
+<p align="center" width="100%">
+  <a href="https://discord.gg/ApvrUsXFxk"><img src="./images/jointhediscord.png"></a>
+</p>
+
 
 # Changelog
 **Version 1.1.0**
@@ -16,7 +20,8 @@ A feature rich Discord bot including party, economy, and voting features with 13
 - Fixed bug where players could see dead chat
 - Fixed bug where Mafioso was town sided
 <details>
-  <summary>Click to view changelog of earlier versions</summary>
+  <summary>Click to view older changelogs</summary>
+  
 **Version 1.0.1**
 - Targeting bug fix
 - New Doctor image
@@ -32,4 +37,25 @@ A feature rich Discord bot including party, economy, and voting features with 13
 </details>
 
 # Roles
+## Town
+The faction of *most* of the players in the game. To win, get rid of all the roles that may harm the **Town**.
 
+## Cop
+**Faction: Town**
+A reliable law enforcer, skilled in keeping evildoers in check.
+- You can interrogate a player each night
+- You will learn if they are **Suspicious** or not
+
+## Detective
+**Faction: Town**
+A private investigator who uncovers one's secrets
+
+- You can investigate a player each night
+- You will learn what possible roles your target might be
+
+## Lookout
+**Faction: Town**
+A skilled observer who keeps an eye on the evils
+
+- You can watch over a player each night
+- You will learn who visits your target
