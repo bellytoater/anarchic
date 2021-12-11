@@ -144,3 +144,23 @@ An obsessed executioner who wants a certain someone killed in front of the town.
 **You will be assigned a player that is a member of the Town :house:. Your goal is to get them lynched, not kill them.**
 
 - If your target is killed at night, you will become a **Jester** :clown_face:
+
+# FAQ
+Q: Are there questions here?
+
+A: No.
+
+# Building
+To build the bot and use it for yourself, you need to have the dependencies from `requirements.txt` installed. If you're too lazy to go look for it, here's the list of libraries:
+
+- aiofiles
+- aiohttp
+- asyncio
+- disnake
+- humanize
+
+Install libraries using `python -m pip install [module name]`.
+
+Insert your bot's token and you're good to go!
+
+❗ **NOTE: Even though this project is open-source, you are not allowed to go around and claim it is yours.**
