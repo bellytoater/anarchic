@@ -18,7 +18,7 @@ A feature rich Discord bot including party, economy, and voting features with 13
 - New `/help` command
 - Fixed bug where bot awkwardly crashes when a player is lynched
 - Fixed bug where players could see dead chat
-- Fixed bug where Mafioso was town sided![1f525](https://user-images.githubusercontent.com/64805926/145694036-fb4637e5-2036-403e-9973-b895fd68efc1.png)
+- Fixed bug where Mafioso was town sided
 
 <details>
   <summary>Click to view older changelogs</summary>
