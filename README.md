@@ -1,4 +1,4 @@
-# Anarchic
+# Anarchic :fire:
 A feature rich Discord bot including party, economy, and voting features with 13 [roles](#roles)!
 
 ### Invite the bot [here](https://discord.com/api/oauth2/authorize?client_id=887118309827432478&permissions=105696980048&scope=bot%20applications.commands)
@@ -7,8 +7,8 @@ A feature rich Discord bot including party, economy, and voting features with 13
 </p>
 
 
-# Changelog
-**Version 1.1.0**
+# Changelog :memo:
+**Version 1.1.0** :ghost:
 - Two new roles: The [Psychic](#psychic) and The [Consigliere](#consigliere)
 - New shop in town! Check out [Anarith](#anarith) selling the newest items, [Shards](#shards)!
 - Two new setups: __**Truth**__ and __**Scattered**__
@@ -18,44 +18,95 @@ A feature rich Discord bot including party, economy, and voting features with 13
 - New `/help` command
 - Fixed bug where bot awkwardly crashes when a player is lynched
 - Fixed bug where players could see dead chat
-- Fixed bug where Mafioso was town sided
+- Fixed bug where Mafioso was town sided![1f525](https://user-images.githubusercontent.com/64805926/145694036-fb4637e5-2036-403e-9973-b895fd68efc1.png)
+
 <details>
   <summary>Click to view older changelogs</summary>
   
-**Version 1.0.1**
+**Version 1.0.1** :camera:
 - Targeting bug fix
 - New Doctor image
 - New Doctor targeting image
 - New Jester image
 - Game results will now be shown in the channel `/start` was used
 
-**Version 1.0.0**
+**Version 1.0.0** :computer:
 - Added the following roles: Cop, Detective, Lookout, Doctor, Enforcer, Mayor, Headhunter, Jester, Mafioso, Consort, Framer
 - Created party system (Wills, Voting, Joining, Leaving, Starting, Changing the setup, The actual game)
 - Added help commands (Role info, List of all roles, List of all setups)
 
 </details>
 
-# Roles
-## Town
+# Roles :performing_arts:
+## Town :house:
 The faction of *most* of the players in the game. To win, get rid of all the roles that may harm the **Town**.
 
-## Cop
+### Cop :mag_right:
 **Faction: Town**
 A reliable law enforcer, skilled in keeping evildoers in check.
 - You can interrogate a player each night
 - You will learn if they are **Suspicious** or not
 
-## Detective
+
+### Detective :detective:
 **Faction: Town**
 A private investigator who uncovers one's secrets
 
 - You can investigate a player each night
 - You will learn what possible roles your target might be
 
-## Lookout
+
+### Lookout 🔭
 **Faction: Town**
 A skilled observer who keeps an eye on the evils
 
 - You can watch over a player each night
 - You will learn who visits your target
+
+
+### Doctor 🧑‍⚕️
+**Faction: Town**
+A secret surgeon who heals people at night
+
+
+- Heal a player each night
+- You will grant your target a **powerful** defense.
+- You and your target will be notified of a successful heal
+- You may only heal yourself once
+
+
+### Enforcer 🔫
+**Faction: Town**
+A rogue vigilante with an eye out for justice.
+
+- You may choose to shoot a player
+- You may not shoot on the first night
+- If you kill a Town member, you will commit suicide and be dealt a **piercing** attack
+
+
+### Mayor 🎩
+**Faction: Town**
+The leader of the town.
+
+- You may reveal yourself as **Mayor** to the rest of the town
+- You will have 3 votes on all voting procedures once you reveal
+
+
+## Mafia :wilted_flower:
+The opposing faction of the **Town** :house:. You must kill everyone who rivals the **Mafia** :wilted_flower:.
+
+### Mafioso :wilted_flower:
+**Faction: Mafia**
+The right hand man of organized crime.
+
+- You can attack a player each night
+- If you die, a random Mafia member will be promoted to the new Mafioso 🥀.
+
+### Framer :framed_picture:
+**Faction: Mafia**
+A skilled deceiver who sets investigations astray.
+
+- You can frame a player each night
+- Frames last until an investigation is preformed on your target
+- Framed players show as **Suspicious** to a **Cop**
+- Framed players show as **Framer**, **Jester** or **Mayor** to a **Detective**.
