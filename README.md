@@ -60,6 +60,7 @@ A private investigator who uncovers one's secrets
 
 ### Lookout 🔭
 **Faction: Town**
+
 A skilled observer who keeps an eye on the evils
 
 - You can watch over a player each night
@@ -68,6 +69,7 @@ A skilled observer who keeps an eye on the evils
 
 ### Doctor 🧑‍⚕️
 **Faction: Town**
+
 A secret surgeon who heals people at night
 
 
@@ -79,6 +81,7 @@ A secret surgeon who heals people at night
 
 ### Enforcer 🔫
 **Faction: Town**
+
 A rogue vigilante with an eye out for justice.
 
 - You may choose to shoot a player
@@ -88,6 +91,7 @@ A rogue vigilante with an eye out for justice.
 
 ### Mayor 🎩
 **Faction: Town**
+
 The leader of the town.
 
 - You may reveal yourself as **Mayor** to the rest of the town
@@ -99,6 +103,7 @@ The opposing faction of the **Town** :house:. You must kill everyone who rivals 
 
 ### Mafioso :wilted_flower:
 **Faction: Mafia**
+
 The right hand man of organized crime.
 
 - You can attack a player each night
@@ -106,6 +111,7 @@ The right hand man of organized crime.
 
 ### Framer :framed_picture:
 **Faction: Mafia**
+
 A skilled deceiver who sets investigations astray.
 
 - You can frame a player each night
@@ -115,6 +121,7 @@ A skilled deceiver who sets investigations astray.
 
 ### Consigliere :magnet:
 **Faction: Mafia**
+
 A corrupted detective who gathers information for the mafia.
 
 - Investigate a player each night
@@ -122,6 +129,7 @@ A corrupted detective who gathers information for the mafia.
 
 ### Consort :revolving_hearts:
 **Faction: Mafia**
+
 A hooker who works for organized crime
 
 - Distract a player each night
@@ -132,6 +140,7 @@ The neutrals. They are their own faction, and they have their own win condition.
 
 ### Jester :clown_face:
 **Faction: Neutral**
+
 A crazed lunatic who wants to be publicly executed
 
 **Your goal: Get yourself lynched :axe:**
@@ -141,6 +150,7 @@ When you are lynched:
 - You will **passively** attack a guilty or abstaining voter the night following your lynch.
 
 ### Headhunter :axe:
+
 An obsessed executioner who wants a certain someone killed in front of the town.
 
 **You will be assigned a player that is a member of the Town :house:. Your goal is to get them lynched, not kill them.**
