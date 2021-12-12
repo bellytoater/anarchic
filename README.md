@@ -43,6 +43,7 @@ The faction of *most* of the players in the game. To win, get rid of all the rol
 
 ### Cop :mag_right:
 **Faction: Town**
+
 A reliable law enforcer, skilled in keeping evildoers in check.
 - You can interrogate a player each night
 - You will learn if they are **Suspicious** or not
@@ -50,6 +51,7 @@ A reliable law enforcer, skilled in keeping evildoers in check.
 
 ### Detective :detective:
 **Faction: Town**
+
 A private investigator who uncovers one's secrets
 
 - You can investigate a player each night
