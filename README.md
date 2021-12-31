@@ -171,6 +171,7 @@ To build the bot and use it for yourself, you need to have the dependencies from
 - disnake
 - humanize
 - requests
+- topggpy
 
 Copy the example config file in the source folder and rename it to `config.py`, change the desired settings, and you're good to go!
 

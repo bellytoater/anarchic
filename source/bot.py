@@ -1,6 +1,5 @@
 import asyncio
 import disnake as disnake
-from disnake.ext import commands, tasks
 import datetime
 import json
 import string
@@ -11,15 +10,17 @@ import random
 import aiohttp
 import requests
 import logging
+import topgg
+import config
 from datetime import datetime
+from disnake.ext import commands, tasks
 from disnake import Option, ButtonStyle, OptionType, SelectOption, OptionChoice, MessageInteraction
 from disnake.ext.commands import errors, MissingPermissions, BadArgument, MissingRequiredArgument, CommandNotFound
 from disnake.reaction import Reaction
 from disnake.utils import get
+from disnake.interactions.application_command import ApplicationCommandInteraction
 from enum import Enum
 from datetime import timedelta
-from disnake.interactions.application_command import ApplicationCommandInteraction
-import config
 
 class Faction(Enum):
     Town = 1
@@ -302,7 +303,7 @@ async def shopUpdater():
 
 intents = disnake.Intents.all()
 bot = commands.Bot(command_prefix=config.PREFIX, intents=intents, case_insensitive=True)
-# bot.topggpy = topgg.DBLClient(bot, config.TOPGG_TOKEN)
+bot.topggpy = topgg.DBLClient(bot, config.TOPGG_TOKEN)
 logging.basicConfig(level=logging.WARNING)
 
 def getTownies(ctx):
@@ -623,10 +624,7 @@ def checkIfMidnight():
 
 @bot.event
 async def on_ready():
-    print('Logged in as')
-    print(bot.user.name)
-    print(bot.user.id)
-    print('------')
+    print('Logged in as ' + bot.user.name + ', with an ID of ' + str(bot.user.id))
     game = disnake.Activity(type=disnake.ActivityType.watching, name="chaos | /help")
     await bot.change_presence(status=disnake.Status.do_not_disturb, activity=game)
     try:
@@ -634,7 +632,7 @@ async def on_ready():
     except:
         pass
 
-    Logger.log("Bot Started", LogType.INFO)
+    print("Bot Started")
 
 
 @bot.event
@@ -8235,7 +8233,6 @@ async def haunt(player:disnake.Member, guild):
     play = Player.get_player(player.id, var[guild]["playerdict"])
     play.dead = True
     play.diedln = True
-    Logger.log("HAUNT SUCESSFULL", LogType.DEBUG)
 
 @bot.command()
 async def lmao(ctx):
