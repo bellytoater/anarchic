@@ -163,16 +163,15 @@ Q: Are there questions here?
 A: No.
 
 # Building
-To build the bot and use it for yourself, you need to have the dependencies from `requirements.txt` installed. If you're too lazy to go look for it, here's the list of libraries:
+To build the bot and use it for yourself, you need to have the dependencies from `requirements.txt` installed (located in the source folder). If you're too lazy to go look for it, here's the list of libraries:
 
 - aiofiles
 - aiohttp
 - asyncio
 - disnake
 - humanize
+- requests
 
-Install libraries using `python -m pip install [module name]`.
-
-Insert your bot's token and you're good to go!
+Copy the example config file in the source folder and rename it to `config.py`, change the desired settings, and you're good to go!
 
 ❗ **NOTE: Even though this project is open-source, you are not allowed to go around and claim it is yours.**

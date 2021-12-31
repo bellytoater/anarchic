@@ -1,0 +1,6 @@
+TOKEN = "enter token here"
+PREFIX = ">"
+
+# TODO: readd topgg
+# Leave blank to disable
+TOPGG_TOKEN = ""

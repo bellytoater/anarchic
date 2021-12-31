@@ -7,22 +7,19 @@ import string
 import re
 import time
 import copy
-import os
 import random
-import dislash
 import aiohttp
 import requests
-import topgg
 import logging
 from datetime import datetime
-from disnake import Option, ButtonStyle, OptionType, SelectOption, SelectMenu, OptionChoice, ActionRow, MessageInteraction
-from disnake.ui import Button
+from disnake import Option, ButtonStyle, OptionType, SelectOption, OptionChoice, MessageInteraction
 from disnake.ext.commands import errors, MissingPermissions, BadArgument, MissingRequiredArgument, CommandNotFound
 from disnake.reaction import Reaction
 from disnake.utils import get
 from enum import Enum
 from datetime import timedelta
 from disnake.interactions.application_command import ApplicationCommandInteraction
+import config
 
 class Faction(Enum):
     Town = 1
@@ -304,8 +301,8 @@ async def shopUpdater():
         json.dump(cur, jsonf)
 
 intents = disnake.Intents.all()
-bot = commands.Bot(command_prefix=">", intents=intents, case_insensitive=True)
-bot.topggpy = topgg.DBLClient(bot, "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Ijg4NzExODMwOTgyNzQzMjQ3OCIsImJvdCI6dHJ1ZSwiaWF0IjoxNjM3NDI2MzA2fQ.k8ufWIHlJIeK1xgpXPWlm1LswoKyb5-r86gkcMOjqgg")
+bot = commands.Bot(command_prefix=config.PREFIX, intents=intents, case_insensitive=True)
+# bot.topggpy = topgg.DBLClient(bot, config.TOPGG_TOKEN)
 logging.basicConfig(level=logging.WARNING)
 
 def getTownies(ctx):
@@ -516,64 +513,64 @@ async def EndGame(reason:EndReason, guild):
 bot.remove_command('help')
 
 temp = {
-"buyables" : ["test"],
-"roles" : ["Cop", "Detective", "Lookout", "Doctor", "Enforcer", "Psychic", "Mayor", "Mafioso", "Consigliere", "Framer", "Consort", "Headhunter", "Jester", "Tracker"],
-"towns" : ["Cop", "Detective", "Lookout", "Doctor", "Enforcer", "Mayor", "Psychic", "Tracker"],
-"support" : ["Mayor", "Psychic"],
-"mafias" : ["Framer", "Consort", "Consigliere"],
-"cults" : ["Cult Leader", "Ritualist"],
-"neutrals" : ["Headhunter", "Jester"],
-"investigatives" : ["Cop", "Detective", "Lookout", "Tracker"],
-"comps" : {"enforced": ["Enforcer", "Doctor", "Mafioso", "RT", "RN"], "classic":["Cop", "Doctor", "Mayor", "Jester", "Mafioso"], "execution":["Cop", "Doctor", "RT", "RT", "Headhunter", "Mafioso"], "legacy":["Cop", "Doctor", "RT", "RT", "RT", "RN", "Mafioso", "RM"], "scattered":["Enforcer", "Doctor", "RT", "RT", "RT", "Mafioso", "RM", "Headhunter"], "duet": ["Enforcer", "Doctor", "TI", "RT", "RT", "Mafioso", "Consort"], "framed": ["Cop", "Doctor", "TI", "RT", "RT", "Mafioso", "Framer"], "anarchy": ["Mayor", "Doctor", "TI", "TI", "RT", "RT", "Mafioso", "RM", "RN", "A"], "ranked": ["Doctor", "Enforcer", "TI", "TI", "RT", "RT", "RT", "Mafioso", "Consort", "Framer"], "truth" : ["Detective", "Doctor", "RT", "RT", "RT", "Mafioso", "Consigliere"],"delta":["Psychopath", "Tracker", "Mafioso"], "custom" : []},
-"data" : {},
-"inv" : {},
-"dailythings" : {},
-"todaystokens" : {},
-"voted" : {},
-"targets" : {},
-"endreason" : EndReason.TownWins,
-"votingemoji" : {},
-"playeremoji" : {},
-"nightd" : 0,
-"night" : False,
-"nightindex" : 0,
-"players" : [],
-"started" : False,
-"emojis" : ["🇦","🇧","🇨","🇩","🇪","🇫","🇬","🇭","🇮","🇯"],
-"emojiz" : ["a","b","c","d","e","f","g","h","i","j"],
-"playerdict" : {"p1": Player(),  "p2": Player(),  "p3": Player(),  "p4": Player(),  "p5": Player(),  "p6": Player(),  "p7": Player(),  "p8": Player(),  "p9": Player(),  "p10": Player()},
-"voting" : False,
-"abstainers" : [],
-"guiltyers" : [],
-"innoers" : [],
-"guyontrial" : 0,
-"startchannel" : None,
-"novotes" : False,
-"mayor" : None,
-"channel" : None,
-"itememoji" : {"Cop Shard" : "<:copshard:924295242566467584>", "Doctor Shard" : "<:docshard:896576968756191273>", "Enforcer Shard" : "<:enfshard:896576814942670899>" ,"Detective Shard" : "<:detshard:924299675891290173>", "Lookout Shard" : "<:loshard:896577050645786655>", "Epic Programmer Trophy" : ":computer:", "Epic Designer Trophy" : ":video_game:", "Epic Artist Trophy" : ":art:", "Mafioso Shard" : "<:mafshard:923934147402162227>", "Headhunter Shard" : "<:hhshard:923934411219681361>", "Jester Shard" : "<:jestshard:923933880833146910>", "Consigliere Shard" : "<:consigshard:924295501795446844>", "Framer Shard" : "<:frameshard:924299361565966406>", "Psychic Shard" : "<:psyshard:924298902058987540>", "Mayor Shard" : "<:mayorshard:924300251869888552>", "Consort Shard" : "<:consshard:924299559168008222>", "Detective Shard" : "<:detshard:924299675891290173>", "Lookout" : "<:loshard:896577050645786655>"},
-"emoji" : {"cop": "<:copicon2:889672912905322516>", "doctor": "<:docicon2:890333203959787580>", "mafioso": "<:maficon2:891739940055052328>", "enforcer": "<:enficon2:890339050865696798>", "lookout": "<:loicon2:889673190392078356>", "psychopath" : "<:psychoicon:922564838897627166>", "consort": "<:consicon2:890336628269281350>", "jester": "<:jesticon2:889968373612560394>", "headhunter": "<:hhicon2:891429754643808276>", "mayor": "<:mayoricon:922566007946629131>", "detective":"<:deticon2:889673135438319637>", "framer": "<:frameicon2:890365634913902602>", "psychic": "<:psyicon2:896159311078780938>", "consigliere" : "<:consigicon2:896154845130666084>", "tracker" : "<:trackicon:922885543812005949>", "janitor" : "<:janiicon:923219547325091840>", "attendant" : "<:mario:901229374500655135>", "rt": "<:townicon2:896431548717473812>", "rm": "<:maficon2:890328238029697044>", "rn": ":axe:", "ti": ":mag_right:", "ts": "🛠️", "a" : ":game_die:"},
-"result" : False,
-"targetint" : 0,
-"vkickd" : {},
-"ind" : 0,
-"isresults" : False,
-"guiltyinno" : False,
-"mafcon" : None,
-"diechannel" : None,
-"killers" : ["Mafioso", "Godfather",  "Enforcer"],
-"guildg" : None,
-"resul" : 0,
-"test": "OK",
-"setupz" : "classic",
-"timer" : 0,
-"index" : 0,
-"trialtimer" : 0,
-"trialuser" : 0,
-"gday" : 0,
-"daysnokill" : 0,
-"leaveq" : [],
-"joinq" : []
+    "buyables" : ["test"],
+    "roles" : ["Cop", "Detective", "Lookout", "Doctor", "Enforcer", "Psychic", "Mayor", "Mafioso", "Consigliere", "Framer", "Consort", "Headhunter", "Jester", "Tracker"],
+    "towns" : ["Cop", "Detective", "Lookout", "Doctor", "Enforcer", "Mayor", "Psychic", "Tracker"],
+    "support" : ["Mayor", "Psychic"],
+    "mafias" : ["Framer", "Consort", "Consigliere"],
+    "cults" : ["Cult Leader", "Ritualist"],
+    "neutrals" : ["Headhunter", "Jester"],
+    "investigatives" : ["Cop", "Detective", "Lookout", "Tracker"],
+    "comps" : {"enforced": ["Enforcer", "Doctor", "Mafioso", "RT", "RN"], "classic":["Cop", "Doctor", "Mayor", "Jester", "Mafioso"], "execution":["Cop", "Doctor", "RT", "RT", "Headhunter", "Mafioso"], "legacy":["Cop", "Doctor", "RT", "RT", "RT", "RN", "Mafioso", "RM"], "scattered":["Enforcer", "Doctor", "RT", "RT", "RT", "Mafioso", "RM", "Headhunter"], "duet": ["Enforcer", "Doctor", "TI", "RT", "RT", "Mafioso", "Consort"], "framed": ["Cop", "Doctor", "TI", "RT", "RT", "Mafioso", "Framer"], "anarchy": ["Mayor", "Doctor", "TI", "TI", "RT", "RT", "Mafioso", "RM", "RN", "A"], "ranked": ["Doctor", "Enforcer", "TI", "TI", "RT", "RT", "RT", "Mafioso", "Consort", "Framer"], "truth" : ["Detective", "Doctor", "RT", "RT", "RT", "Mafioso", "Consigliere"],"delta":["Psychopath", "Tracker", "Mafioso"], "custom" : []},
+    "data" : {},
+    "inv" : {},
+    "dailythings" : {},
+    "todaystokens" : {},
+    "voted" : {},
+    "targets" : {},
+    "endreason" : EndReason.TownWins,
+    "votingemoji" : {},
+    "playeremoji" : {},
+    "nightd" : 0,
+    "night" : False,
+    "nightindex" : 0,
+    "players" : [],
+    "started" : False,
+    "emojis" : ["🇦","🇧","🇨","🇩","🇪","🇫","🇬","🇭","🇮","🇯"],
+    "emojiz" : ["a","b","c","d","e","f","g","h","i","j"],
+    "playerdict" : {"p1": Player(),  "p2": Player(),  "p3": Player(),  "p4": Player(),  "p5": Player(),  "p6": Player(),  "p7": Player(),  "p8": Player(),  "p9": Player(),  "p10": Player()},
+    "voting" : False,
+    "abstainers" : [],
+    "guiltyers" : [],
+    "innoers" : [],
+    "guyontrial" : 0,
+    "startchannel" : None,
+    "novotes" : False,
+    "mayor" : None,
+    "channel" : None,
+    "itememoji" : {"Cop Shard" : "<:copshard:924295242566467584>", "Doctor Shard" : "<:docshard:896576968756191273>", "Enforcer Shard" : "<:enfshard:896576814942670899>" ,"Detective Shard" : "<:detshard:924299675891290173>", "Lookout Shard" : "<:loshard:896577050645786655>", "Epic Programmer Trophy" : ":computer:", "Epic Designer Trophy" : ":video_game:", "Epic Artist Trophy" : ":art:", "Mafioso Shard" : "<:mafshard:923934147402162227>", "Headhunter Shard" : "<:hhshard:923934411219681361>", "Jester Shard" : "<:jestshard:923933880833146910>", "Consigliere Shard" : "<:consigshard:924295501795446844>", "Framer Shard" : "<:frameshard:924299361565966406>", "Psychic Shard" : "<:psyshard:924298902058987540>", "Mayor Shard" : "<:mayorshard:924300251869888552>", "Consort Shard" : "<:consshard:924299559168008222>", "Detective Shard" : "<:detshard:924299675891290173>", "Lookout" : "<:loshard:896577050645786655>"},
+    "emoji" : {"cop": "<:copicon2:889672912905322516>", "doctor": "<:docicon2:890333203959787580>", "mafioso": "<:maficon2:891739940055052328>", "enforcer": "<:enficon2:890339050865696798>", "lookout": "<:loicon2:889673190392078356>", "psychopath" : "<:psychoicon:922564838897627166>", "consort": "<:consicon2:890336628269281350>", "jester": "<:jesticon2:889968373612560394>", "headhunter": "<:hhicon2:891429754643808276>", "mayor": "<:mayoricon:922566007946629131>", "detective":"<:deticon2:889673135438319637>", "framer": "<:frameicon2:890365634913902602>", "psychic": "<:psyicon2:896159311078780938>", "consigliere" : "<:consigicon2:896154845130666084>", "tracker" : "<:trackicon:922885543812005949>", "janitor" : "<:janiicon:923219547325091840>", "attendant" : "<:mario:901229374500655135>", "rt": "<:townicon2:896431548717473812>", "rm": "<:maficon2:890328238029697044>", "rn": ":axe:", "ti": ":mag_right:", "ts": "🛠️", "a" : ":game_die:"},
+    "result" : False,
+    "targetint" : 0,
+    "vkickd" : {},
+    "ind" : 0,
+    "isresults" : False,
+    "guiltyinno" : False,
+    "mafcon" : None,
+    "diechannel" : None,
+    "killers" : ["Mafioso", "Godfather",  "Enforcer"],
+    "guildg" : None,
+    "resul" : 0,
+    "test": "OK",
+    "setupz" : "classic",
+    "timer" : 0,
+    "index" : 0,
+    "trialtimer" : 0,
+    "trialuser" : 0,
+    "gday" : 0,
+    "daysnokill" : 0,
+    "leaveq" : [],
+    "joinq" : []
 }
 
 badcet = False
@@ -581,13 +578,25 @@ badtemp = False
 
 var = {}
 
-with open('data.json') as jsonf:
+with open('data.json', 'w+') as jsonf:
+    if jsonf.read(2) != '[]':
+        jsonf.write('{}')
+    jsonf.seek(0)    
     cur = json.load(jsonf)
-with open('inv.json') as jsonf:
+with open('inv.json', 'w+') as jsonf:
+    if jsonf.read(2) != '[]':
+        jsonf.write('{}')
+    jsonf.seek(0)
     inv = json.load(jsonf)
-with open('guilds.json') as jsonf:
+with open('guilds.json', 'w+') as jsonf:
+    if jsonf.read(2) != '[]':
+        jsonf.write('{}')
+    jsonf.seek(0)
     guilds = json.load(jsonf)
-with open('shop.json') as jsonf:
+with open('shop.json', 'w+') as jsonf:
+    if jsonf.read(2) != '[]':
+        jsonf.write('{}')
+    jsonf.seek(0)
     store = json.load(jsonf)
     
 
@@ -955,7 +964,7 @@ async def bank(inter):
     ],
 )
 async def give(inter, member=None, amount=None):
-    if (member.bot == True):
+    if (member.bot):
         await inter.response.send_message("You can't give silvers to a bot. Otherwise, how will you get them back?", ephemeral=True)
     else:
         if (amount < 0):
@@ -1921,7 +1930,7 @@ async def info(inter):
     await inter.response.send_message(embed=embed)
 
 @commands.guild_only()
-@dislash.has_role("Lookout (Lvl 3)")
+@commands.has_role("Lookout (Lvl 3)")
 @bot.slash_command(
     name="game",
     description="Try to get others to play Anarchic",
@@ -8302,6 +8311,6 @@ async def supergive(ctx, user:disnake.Member, amount):
 
 
 try:
-    bot.run(TOKEN)
+    bot.run(config.TOKEN)
 except aiohttp.client_exceptions.ClientConnectorError:
     print("Internet Error")
