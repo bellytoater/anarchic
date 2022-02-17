@@ -8744,6 +8744,6 @@ async def supergive(ctx, user:disnake.Member, amount):
 
 
 try:
-    bot.run("ODg3MTE4MzA5ODI3NDMyNDc4.YT_fTg.ifiDTxpdKyu9_1Lrlhi7lBX4qUQ")
+    bot.run("TOKEN")
 except aiohttp.client_exceptions.ClientConnectorError:
-    print("when you realize the wifi failed")
+    print("Internet Error")
