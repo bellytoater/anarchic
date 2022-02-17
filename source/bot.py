@@ -13,7 +13,6 @@ import time
 import copy
 import os
 import random
-import dislash
 import time
 import aiohttp
 import requests
@@ -2286,27 +2285,6 @@ async def info(inter):
     embed.add_field(name="Anarchic also offers different modes in our bot, those modes are : ", value="**:triangular_flag_on_post: Classic (5 players)\n<:enficon2:890339050865696798> Enforced (5 players)\n<:hhicon2:891429754643808276> Execution (6 players)\n<:consicon2:890336628269281350> Duet (7 players)\n<:frameicon2:890365634913902602> Framed (7 players)\n<:consigicon2:896154845130666084> Truth (7 players)\n:sparkles: Legacy (8 players)\n:diamond_shape_with_a_dot_inside: Scattered (9 players)\n:drop_of_blood: Anarchy (10 players)\n:star2: Ranked (10 players)**\n\nYou can run the /setups command to view these, to set the mode to a desired setup run the /setup command. And you can run the /party command after changing the setup to view the roles in the mode!", inline=False)
     embed.add_field(name="Other important commands for the game:", value="🔹 `/leave`  to leave the party, if the leader leaves the second person becomes the leader\n🔹 `/clear` to clear the party if the party is filled with AFKs\n🔹 `/kick` to kick an AFK player from the party, can only be done by the party leader\n🔹 `/help` to view the list of commands", inline=False)
     await inter.response.send_message(embed=embed)
-
-@commands.guild_only()
-@dislash.has_role("Lookout (Lvl 3)")
-@bot.slash_command(
-    name="game",
-    description="Try to get others to play Anarchic",
-    options = [
-        Option("message", "Your optional message to send along with your game invite", OptionType.string, False)
-    ],
-    guild_ids=[753967387149074543]
-)
-async def game(inter, message=None):
-    if (message == None):
-        message = "Use `/join` to join!"
-
-    embed = disnake.Embed(title=f"{inter.author.name} wants to play Anarchic!", colour=disnake.Colour(0xbfb932), description=message)
-
-    embed.set_thumbnail(url="https://cdn.discordapp.com/icons/753967387149074543/d77cf3d1192d84e441a5a194fb8ef081.webp?size=1024")
-    embed.set_footer(text="Use /join to join.", icon_url=inter.author.avatar.url)
-    
-    await inter.response.send_message(content="<@&867926341876584449>", embed=embed)
 
 @commands.guild_only()
 @bot.slash_command(
