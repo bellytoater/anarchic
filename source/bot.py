@@ -1,26 +1,33 @@
+# -*- coding: UTF-8 -*-
+
 import asyncio
+from pickle import FALSE
 import disnake as disnake
+from disnake.ext import commands, tasks
 import datetime
 import json
 import string
 import re
+import demoji
 import time
 import copy
+import os
 import random
+import dislash
+import time
 import aiohttp
 import requests
-import logging
 import topgg
-import config
+import logging
 from datetime import datetime
-from disnake.ext import commands, tasks
-from disnake import Option, ButtonStyle, OptionType, SelectOption, OptionChoice, MessageInteraction
+from disnake import Option, ButtonStyle, OptionType, SelectOption, SelectMenu, OptionChoice, ActionRow, MessageInteraction
+from disnake.ui import Button
 from disnake.ext.commands import errors, MissingPermissions, BadArgument, MissingRequiredArgument, CommandNotFound
 from disnake.reaction import Reaction
 from disnake.utils import get
-from disnake.interactions.application_command import ApplicationCommandInteraction
 from enum import Enum
 from datetime import timedelta
+from disnake.interactions.application_command import ApplicationCommandInteraction
 
 class Faction(Enum):
     Town = 1
@@ -72,9 +79,6 @@ class LogType(Enum):
     ERROR = 4,
     DEBUG = 5
 
-class CannotSendDMError(Exception):
-    pass
-
 #Create player vars
 
 class Player(object):
@@ -108,34 +112,7 @@ class Player(object):
         self.id = 0
 
     def reset(self, will=False):
-        self.role = ""
-        self.charges = 3
-        self.ogrole = ""
-        self.dead = False
-        self.islynched = False
-        self.appearssus = False
-        self.isrevealed = False
-        self.faction = Faction.Town
-        self.hhtarget = None
-        self.framed = False
-        self.wasrevealed = False
-        self.docHealedHimself = False
-        self.death = []
-        self.jesterwin = False
-        self.cautious = False
-        self.doc = False
-        self.defense = Defense.Default
-        self.destraction = False
-        self.checked = False
-        self.wins = False
-        self.ready = False
-        self.voted = False
-        if (will==False):
-            self.will = []
-        self.diedln = False
-        self.votedforwho = None
-        self.detresult = None
-        self.id = 0
+        self.__init__()
 
     def get_player(id, ddict:dict):
         """Get a Player by it's assigned ID. Returns `None` if it cannot be found."""
@@ -167,6 +144,77 @@ class Logger():
         f.close()
 
         # os.chdir(cwd)
+
+achivements = []
+
+class Achievement:
+    def __init__(self, name:str, des:str, secret:str, hidden:bool=False, obtainable:bool=True):
+        self.name = name
+        self.description = des
+        self.secret = secret
+        self.hidden = hidden
+        self.obtainable = obtainable
+
+        achivements.append(self)
+        self.id = achivements.index(self)
+
+    def getAch(name:str):
+        for i in achivements:
+            if (i.secret == name):
+                return i
+        
+        return None
+
+    def getAchById(id:int):
+        for i in achivements:
+            if (i.id == id):
+                return i
+        
+        return None
+
+    async def unlock(self, user:int, ctx, dm=False):
+        try:
+            guilds[str(user)]["achivements"]
+        except:
+            guilds[str(user)]["achivements"] = []
+
+        if (self.id in guilds[str(user)]["achivements"] or self.obtainable == False):
+            return
+
+        guilds[str(user)]["achivements"].append(self.id)
+        if (ctx != None):
+            member = await ctx.guild.fetch_member(user)
+        
+        if (dm == True):
+            embed = disnake.Embed(title="**Achivement unlocked!**", description="You've earned the achievement:", colour=disnake.Colour(0x30ed76))
+        else:
+            embed = disnake.Embed(title="**Achivement unlocked!**", description=f"{member.mention} earned the achievement:", colour=disnake.Colour(0x30ed76))
+
+        embed.set_author(name=member.name, icon_url=member.avatar.url)
+        embed.set_footer(text=f"Congratulations!", icon_url=member.avatar.url)
+
+        embed.add_field(name=self.name, value=self.description)
+        if (dm != True):
+            await ctx.send(embed=embed)
+        else:
+            bot.get_user(user).send(embed=embed)
+
+        with open('guilds.json', 'w') as jsonf:
+            json.dump(guilds, jsonf)
+
+#init achivements
+Achievement("Test", "This is a test achivement.", "simpleTest", False, False)
+Achievement("The Beginning", "Everything must start somewhere...", "firstGame")
+Achievement("Wealthy Fellow", "Get rich!", "richPlayer")
+Achievement("Unstoppable", "Blood shall not be spilled", "nobodyIsDead")
+Achievement("Justice", "Truth may come to sight", "hasSeenSuspicous")
+Achievement("Natural remedies", "Heal a wounded player", "hasHealedPlayer")
+Achievement("Plot Twist", "The greatest one.", "1v1", True)
+Achievement("Pacifist", "Without violence, there is only peace", "onlyLynchPlayer", True)
+Achievement("Quick Execution", "Secure your victory as soon as possible", "hhDay2")
+Achievement("Legendary", "As th ey were a livng legend", "1000Games", True)
+
+#util functions/stuff
 
 def PlayerSize(size:int):
     if (size >= 5 and size <= 6):
@@ -301,11 +349,26 @@ async def shopUpdater():
     with open('data.json', 'w') as jsonf:
         json.dump(cur, jsonf)
 
+    with open('guilds.json', 'w') as jsonf:
+        json.dump(guilds, jsonf)
+
 intents = disnake.Intents.all()
-bot = commands.Bot(command_prefix=config.PREFIX, intents=intents, case_insensitive=True)
-bot.topggpy = topgg.DBLClient(bot, config.TOPGG_TOKEN)
+bot = commands.Bot(command_prefix=">", intents=intents, case_insensitive=True)
+bot.topggpy = topgg.DBLClient(bot, "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Ijg4NzExODMwOTgyNzQzMjQ3OCIsImJvdCI6dHJ1ZSwiaWF0IjoxNjM3NDI2MzA2fQ.k8ufWIHlJIeK1xgpXPWlm1LswoKyb5-r86gkcMOjqgg")
 logging.basicConfig(level=logging.WARNING)
 
+def tryGetValue(id:int, value):
+    try:
+        guilds[str(id)]
+    except:
+        guilds[str(id)] = {"guild" : 0, "joinedgame" : False, "equipped" : None}
+
+    try:
+        return guilds[str(id)][value]
+    except:
+        guilds[str(id)][value] = None
+
+        return guilds[str(id)][value]
 def getTownies(ctx):
     res = []
     for i in var[ctx.id]["playerdict"].values():
@@ -514,90 +577,78 @@ async def EndGame(reason:EndReason, guild):
 bot.remove_command('help')
 
 temp = {
-    "buyables" : ["test"],
-    "roles" : ["Cop", "Detective", "Lookout", "Doctor", "Enforcer", "Psychic", "Mayor", "Mafioso", "Consigliere", "Framer", "Consort", "Headhunter", "Jester", "Tracker"],
-    "towns" : ["Cop", "Detective", "Lookout", "Doctor", "Enforcer", "Mayor", "Psychic", "Tracker"],
-    "support" : ["Mayor", "Psychic"],
-    "mafias" : ["Framer", "Consort", "Consigliere"],
-    "cults" : ["Cult Leader", "Ritualist"],
-    "neutrals" : ["Headhunter", "Jester"],
-    "investigatives" : ["Cop", "Detective", "Lookout", "Tracker"],
-    "comps" : {"enforced": ["Enforcer", "Doctor", "Mafioso", "RT", "RN"], "classic":["Cop", "Doctor", "Mayor", "Jester", "Mafioso"], "execution":["Cop", "Doctor", "RT", "RT", "Headhunter", "Mafioso"], "legacy":["Cop", "Doctor", "RT", "RT", "RT", "RN", "Mafioso", "RM"], "scattered":["Enforcer", "Doctor", "RT", "RT", "RT", "Mafioso", "RM", "Headhunter"], "duet": ["Enforcer", "Doctor", "TI", "RT", "RT", "Mafioso", "Consort"], "framed": ["Cop", "Doctor", "TI", "RT", "RT", "Mafioso", "Framer"], "anarchy": ["Mayor", "Doctor", "TI", "TI", "RT", "RT", "Mafioso", "RM", "RN", "A"], "ranked": ["Doctor", "Enforcer", "TI", "TI", "RT", "RT", "RT", "Mafioso", "Consort", "Framer"], "truth" : ["Detective", "Doctor", "RT", "RT", "RT", "Mafioso", "Consigliere"],"delta":["Psychopath", "Tracker", "Mafioso"], "custom" : []},
-    "data" : {},
-    "inv" : {},
-    "dailythings" : {},
-    "todaystokens" : {},
-    "voted" : {},
-    "targets" : {},
-    "endreason" : EndReason.TownWins,
-    "votingemoji" : {},
-    "playeremoji" : {},
-    "nightd" : 0,
-    "night" : False,
-    "nightindex" : 0,
-    "players" : [],
-    "started" : False,
-    "emojis" : ["🇦","🇧","🇨","🇩","🇪","🇫","🇬","🇭","🇮","🇯"],
-    "emojiz" : ["a","b","c","d","e","f","g","h","i","j"],
-    "playerdict" : {"p1": Player(),  "p2": Player(),  "p3": Player(),  "p4": Player(),  "p5": Player(),  "p6": Player(),  "p7": Player(),  "p8": Player(),  "p9": Player(),  "p10": Player()},
-    "voting" : False,
-    "abstainers" : [],
-    "guiltyers" : [],
-    "innoers" : [],
-    "guyontrial" : 0,
-    "startchannel" : None,
-    "novotes" : False,
-    "mayor" : None,
-    "channel" : None,
-    "itememoji" : {"Cop Shard" : "<:copshard:924295242566467584>", "Doctor Shard" : "<:docshard:896576968756191273>", "Enforcer Shard" : "<:enfshard:896576814942670899>" ,"Detective Shard" : "<:detshard:924299675891290173>", "Lookout Shard" : "<:loshard:896577050645786655>", "Epic Programmer Trophy" : ":computer:", "Epic Designer Trophy" : ":video_game:", "Epic Artist Trophy" : ":art:", "Mafioso Shard" : "<:mafshard:923934147402162227>", "Headhunter Shard" : "<:hhshard:923934411219681361>", "Jester Shard" : "<:jestshard:923933880833146910>", "Consigliere Shard" : "<:consigshard:924295501795446844>", "Framer Shard" : "<:frameshard:924299361565966406>", "Psychic Shard" : "<:psyshard:924298902058987540>", "Mayor Shard" : "<:mayorshard:924300251869888552>", "Consort Shard" : "<:consshard:924299559168008222>", "Detective Shard" : "<:detshard:924299675891290173>", "Lookout" : "<:loshard:896577050645786655>"},
-    "emoji" : {"cop": "<:copicon2:889672912905322516>", "doctor": "<:docicon2:890333203959787580>", "mafioso": "<:maficon2:891739940055052328>", "enforcer": "<:enficon2:890339050865696798>", "lookout": "<:loicon2:889673190392078356>", "psychopath" : "<:psychoicon:922564838897627166>", "consort": "<:consicon2:890336628269281350>", "jester": "<:jesticon2:889968373612560394>", "headhunter": "<:hhicon2:891429754643808276>", "mayor": "<:mayoricon:922566007946629131>", "detective":"<:deticon2:889673135438319637>", "framer": "<:frameicon2:890365634913902602>", "psychic": "<:psyicon2:896159311078780938>", "consigliere" : "<:consigicon2:896154845130666084>", "tracker" : "<:trackicon:922885543812005949>", "janitor" : "<:janiicon:923219547325091840>", "attendant" : "<:mario:901229374500655135>", "rt": "<:townicon2:896431548717473812>", "rm": "<:maficon2:890328238029697044>", "rn": ":axe:", "ti": ":mag_right:", "ts": "🛠️", "a" : ":game_die:"},
-    "result" : False,
-    "targetint" : 0,
-    "vkickd" : {},
-    "ind" : 0,
-    "isresults" : False,
-    "guiltyinno" : False,
-    "mafcon" : None,
-    "diechannel" : None,
-    "killers" : ["Mafioso", "Godfather",  "Enforcer"],
-    "guildg" : None,
-    "resul" : 0,
-    "test": "OK",
-    "setupz" : "classic",
-    "timer" : 0,
-    "index" : 0,
-    "trialtimer" : 0,
-    "trialuser" : 0,
-    "gday" : 0,
-    "daysnokill" : 0,
-    "leaveq" : [],
-    "joinq" : []
+"buyables" : ["test"],
+"roles" : ["Cop", "Detective", "Lookout", "Doctor", "Enforcer", "Psychic", "Mayor", "Mafioso", "Consigliere", "Framer", "Consort", "Headhunter", "Jester", "Tracker", "Psychopath", "Janitor"],
+"towns" : ["Cop", "Detective", "Lookout", "Doctor", "Enforcer", "Mayor", "Psychic", "Tracker", "Attendant"],
+"support" : ["Mayor", "Psychic", "Attendant"],
+"mafias" : ["Framer", "Consort", "Consigliere", "Janitor"],
+"cults" : ["Cult Leader", "Ritualist"],
+"neutrals" : ["Headhunter", "Jester", "Psychopath"],
+"uniques" : ["Janitor", "Framer", "Consigliere", "Consort"],
+"investigatives" : ["Cop", "Detective", "Lookout", "Tracker"],
+"comps" : {"enforced": ["Enforcer", "Doctor", "Mafioso", "RT", "RN"], "classic":["Cop", "Doctor", "Mayor", "Jester", "Mafioso"], "execution":["Cop", "Doctor", "RT", "RT", "Headhunter", "Mafioso"], "legacy":["Cop", "Doctor", "RT", "RT", "RT", "RN", "Mafioso", "RM"], "scattered":["Enforcer", "Doctor", "RT", "RT", "RT", "Mafioso", "RM", "Headhunter"], "duet": ["Enforcer", "Doctor", "TI", "RT", "RT", "Mafioso", "Consort"], "framed": ["Cop", "Doctor", "TI", "RT", "RT", "Mafioso", "Framer"], "anarchy": ["Mayor", "Doctor", "TI", "TI", "RT", "RT", "Mafioso", "RM", "RN", "A"], "ranked": ["Doctor", "Enforcer", "TI", "TI", "RT", "RT", "RT", "Mafioso", "Consort", "Framer"], "truth" : ["Detective", "Doctor", "RT", "RT", "RT", "Mafioso", "Consigliere"],"delta":["Psychopath", "Tracker", "Mafioso"], "custom" : []},
+"data" : {},
+"inv" : {},
+"dailythings" : {},
+"todaystokens" : {},
+"voted" : {},
+"targets" : {},
+"endreason" : EndReason.TownWins,
+"votingemoji" : {},
+"playeremoji" : {},
+"nightd" : 0,
+"night" : False,
+"nightindex" : 0,
+"players" : [],
+"started" : False,
+"emojis" : ["🇦","🇧","🇨","🇩","🇪","🇫","🇬","🇭","🇮","🇯"],
+"emojiz" : ["a","b","c","d","e","f","g","h","i","j"],
+"playerdict" : {"p1": Player(),  "p2": Player(),  "p3": Player(),  "p4": Player(),  "p5": Player(),  "p6": Player(),  "p7": Player(),  "p8": Player(),  "p9": Player(),  "p10": Player()},
+"voting" : False,
+"abstainers" : [],
+"guiltyers" : [],
+"innoers" : [],
+"guyontrial" : 0,
+"startchannel" : None,
+"novotes" : False,
+"mayor" : None,
+"channel" : None,
+"itememoji" : {"Cop Shard" : "<:copshard:924295242566467584>", "Doctor Shard" : "<:docshard:896576968756191273>", "Enforcer Shard" : "<:enfshard:896576814942670899>" ,"Detective Shard" : "<:detshard:924299675891290173>", "Lookout Shard" : "<:loshard:896577050645786655>", "Epic Programmer Trophy" : ":computer:", "Epic Designer Trophy" : ":video_game:", "Epic Artist Trophy" : ":art:", "Mafioso Shard" : "<:mafshard:923934147402162227>", "Headhunter Shard" : "<:hhshard:923934411219681361>", "Jester Shard" : "<:jestshard:923933880833146910>", "Consigliere Shard" : "<:consigshard:924295501795446844>", "Framer Shard" : "<:frameshard:924299361565966406>", "Psychic Shard" : "<:psyshard:924298902058987540>", "Mayor Shard" : "<:mayorshard:924300251869888552>", "Consort Shard" : "<:consshard:924299559168008222>", "Detective Shard" : "<:detshard:924299675891290173>", "Lookout" : "<:loshard:896577050645786655>"},
+"emoji" : {"cop": "<:copicon2:889672912905322516>", "doctor": "<:docicon2:890333203959787580>", "mafioso": "<:maficon2:891739940055052328>", "enforcer": "<:enficon2:890339050865696798>", "lookout": "<:loicon2:889673190392078356>", "psychopath" : "<:psychoicon:922564838897627166>", "consort": "<:consicon2:890336628269281350>", "jester": "<:jesticon2:889968373612560394>", "headhunter": "<:hhicon2:891429754643808276>", "mayor": "<:mayoricon:922566007946629131>", "detective":"<:deticon2:889673135438319637>", "framer": "<:frameicon2:890365634913902602>", "psychic": "<:psyicon2:896159311078780938>", "consigliere" : "<:consigicon2:896154845130666084>", "tracker" : "<:trackicon:922885543812005949>", "janitor" : "<:janiicon:923219547325091840>", "attendant" : "<:mario:901229374500655135>", "rt": "<:townicon2:896431548717473812>", "rm": "<:maficon2:890328238029697044>", "rn": ":axe:", "ti": ":mag_right:", "ts": "🛠️", "a" : ":game_die:"},
+"result" : False,
+"targetint" : 0,
+"vkickd" : {},
+"ind" : 0,
+"isresults" : False,
+"guiltyinno" : False,
+"mafcon" : None,
+"votethreads" : 0,
+"diechannel" : None,
+"killers" : ["Mafioso", "Godfather",  "Enforcer"],
+"guildg" : None,
+"resul" : 0,
+"test": "OK",
+"setupz" : "classic",
+"timer" : 0,
+"index" : 0,
+"trialtimer" : 0,
+"trialuser" : 0,
+"gday" : 0,
+"daysnokill" : 0,
+"leaveq" : [],
+"joinq" : [],
+"maftarget" : 0
 }
-
-badcet = False
-badtemp = False
 
 var = {}
 
-with open('data.json', 'w+') as jsonf:
-    if jsonf.read(2) != '[]':
-        jsonf.write('{}')
-    jsonf.seek(0)    
+with open('data.json') as jsonf:
     cur = json.load(jsonf)
-with open('inv.json', 'w+') as jsonf:
-    if jsonf.read(2) != '[]':
-        jsonf.write('{}')
-    jsonf.seek(0)
+with open('inv.json') as jsonf:
     inv = json.load(jsonf)
-with open('guilds.json', 'w+') as jsonf:
-    if jsonf.read(2) != '[]':
-        jsonf.write('{}')
-    jsonf.seek(0)
+with open('guilds.json') as jsonf:
     guilds = json.load(jsonf)
-with open('shop.json', 'w+') as jsonf:
-    if jsonf.read(2) != '[]':
-        jsonf.write('{}')
-    jsonf.seek(0)
+with open('shop.json') as jsonf:
     store = json.load(jsonf)
     
 
@@ -624,7 +675,10 @@ def checkIfMidnight():
 
 @bot.event
 async def on_ready():
-    print('Logged in as ' + bot.user.name + ', with an ID of ' + str(bot.user.id))
+    print('Logged in as:')
+    print(bot.user.name)
+    print('With a bot ID of ' + str(bot.user.id))
+    print('------')
     game = disnake.Activity(type=disnake.ActivityType.watching, name="chaos | /help")
     await bot.change_presence(status=disnake.Status.do_not_disturb, activity=game)
     try:
@@ -632,7 +686,6 @@ async def on_ready():
     except:
         pass
 
-    print("Bot Started")
 
 
 @bot.event
@@ -649,7 +702,12 @@ async def on_slash_command_error(interaction, error):
 
         embed.set_thumbnail(url="https://images-ext-2.discordapp.net/external/zvBfC-Hei3zC-NkTa_MJ1t-lx4Fu6dXoB-5uzicvPYE/https/images-ext-2.discordapp.net/external/EedL1z9T7uNxVlYBIUQzc_rvdcYeTJpDC_4fm7TQZBo/%253Fwidth%253D468%2526height%253D468/https/media.discordapp.net/attachments/765738640554065962/893661449216491540/Anarchic.png")
         embed.set_footer(text="If this keeps happening, contact support at `/invite`", icon_url=interaction.author.avatar.url)
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.channel.send(content=interaction.author.mention, embed=embed, ephemeral=True)
+    elif (isinstance(error, disnake.errors.Forbidden)):
+        embed = disnake.Embed(title="The bot is lacking permissions to perform an action", colour=disnake.Colour(0xea5f61), description="**The bot is missing role permissions to preform an action. Make sure that the bot has the following permissions:\nManage Roles\nManage Channels\nManage Nicknames\nChange Nickname\nRead Messages\nSend Messages\nManage Messages\nEmbed Links\nAttatch Files\nRead Message History\nMention Everyone\nAdd Reactions\nUse External Emojis**")
+
+        embed.set_thumbnail(url="https://images-ext-2.discordapp.net/external/EedL1z9T7uNxVlYBIUQzc_rvdcYeTJpDC_4fm7TQZBo/%3Fwidth%3D468%26height%3D468/https/media.discordapp.net/attachments/765738640554065962/893661449216491540/Anarchic.png")
+        embed.set_footer(text="If this keeps happening, contact support with `/invite`")
     else:
         raise error
 
@@ -667,6 +725,8 @@ async def on_slash_command(inter):
         guilds[str(inter.author.id)]
     except:
         guilds[str(inter.author.id)] = {"guild" : 0, "joinedgame" : False, "equipped" : None}
+
+    random.seed(time.time())
 
 @bot.event
 async def on_command_error(ctx, error):
@@ -726,23 +786,44 @@ async def help(ctx):
 
     await ctx.send(embed=embed)
 
-@bot.command()
-async def weafjewiuohfoiuyhibnitjwrleuiog(ctx):
-    embed = disnake.Embed(title=f"**Jellytoaster** has revealed themselves to be the Bot Developer!", colour=disnake.Colour(0xbc9b25), description="They will now have 3 votes in all voting procedures regarding the Anarchic server and bot.")
+class Tag(disnake.ui.Modal):
+    def __init__(self) -> None:
 
-    embed.set_image(url="https://cdn.discordapp.com/attachments/878437549721419787/882418844424081449/unknown.png")
-    embed.set_thumbnail(url="https://cdn.discordapp.com/emojis/897570023143518288.png?size=80")
-    await ctx.send(embed=embed)
-    await ctx.message.delete()
+        components = [
+            disnake.ui.TextInput(
+                style=disnake.TextInputStyle.single_line,
+                label="YOUR MOM",
+                placeholder="YOUR MOM",
+                custom_id="name",
+                max_length=50,
+            ),
+            disnake.ui.TextInput(
+                style=disnake.TextInputStyle.long,
+                label="YOUR MOM",
+                placeholder="YOUR MOM",
+                custom_id="content",
+            )
+        ]
 
-@bot.command()
-async def reveal(ctx):
-    embed = disnake.Embed(title=f"**Cet** has revealed themselves to be the Peasant!", colour=disnake.Colour(0xbc9b25), description="They will now have 0 votes in all voting procedures regarding the Anarchic server and bot.")
+        super().__init__(title="YOUR MOM", custom_id="tag_creation", components=components)
 
-    embed.set_image(url="https://cdn.discordapp.com/attachments/878437549721419787/882418844424081449/unknown.png")
-    embed.set_thumbnail(url="https://cdn.discordapp.com/emojis/897570023143518288.png?size=80")
-    await ctx.send(embed=embed)
-    await ctx.message.delete()
+    async def callback(self, inter: disnake.ModalInteraction) -> None:
+        await inter.response.send_message("cool")
+
+    async def on_error(self, error: Exception, inter: disnake.ModalInteraction) -> None:
+        await inter.response.send_message("Oops, something went wrong.", ephemeral=True)
+
+@bot.slash_command(
+    name="your_mom",
+    description="your_mom",
+    guild_ids=[753967387149074543]
+)
+async def your_mom(inter: disnake.AppCmdInter) -> None:
+    await inter.response.send_modal(Tag())
+
+# @bot.command()
+# async def test_achivement(ctx):
+#     await Achievement.getAch("simpleTest").unlock(ctx.author.id, ctx.channel)
 
 @bot.slash_command(
     name="help",
@@ -772,7 +853,7 @@ async def invite(ctx):
 )
 async def invite(ctx):
     dev:disnake.User = bot.get_user(839842855970275329)
-    art:disnake.User = bot.get_user(703645091901866044)
+    art:disnake.User = bot.get_user(643566247337787402)
     mak:disnake.User = bot.get_user(667189788620619826)
 
 
@@ -782,7 +863,7 @@ async def invite(ctx):
     embed.set_footer(text="Invite me to your server!", icon_url=ctx.author.avatar.url)
     embed.add_field(name="Bot", value="[Click Here](https://discord.com/api/oauth2/authorize?client_id=887118309827432478&permissions=105696980048&scope=bot%20applications.commands)", inline=False)
     embed.add_field(name="Server", value="[Click Here](https://disnake.gg/ZHuFPHy7cw)", inline=False)
-    embed.add_field(name="Anarchic Staff Team", value=f"**:art: Artist - {art.name}#{art.discriminator}\n**:computer: Programmer - {dev.name}#{dev.discriminator}**\n**:video_game: Manager - {mak.name}#{mak.discriminator}**")
+    embed.add_field(name="Anarchic Staff Team", value=f"**:art: Artist - {art.name}#{art.discriminator}**\n**:computer: Programmer - {dev.name}#{dev.discriminator}**\n**:video_game: Manager - {mak.name}#{mak.discriminator}**")
     await ctx.send(embed=embed)
 
 
@@ -888,7 +969,7 @@ async def bal(inter, member=None):
     try:
         guilds[str(inter.author.id)]["title"]
     except:
-        guilds[str(inter.author.id)]["title"] = "The Townie"
+        guilds[str(inter.author.id)] = {"guild": 0, "joinedgame": False, "equipped": None, "vkicktarget": 0, "claimed": False, "voted": False, "title": "The Townie"}
 
     if (member == None):
         if (str(inter.author.id) not in cur):
@@ -896,12 +977,13 @@ async def bal(inter, member=None):
 
         balance = str(cur[str(inter.author.id)])
         tit = guilds[str(inter.author.id)]["title"]
-        embed = disnake.Embed(title=f"<a:sparkle:894702379851735100> {inter.author.name}'s profile <a:sparkle:894702379851735100>", colour=disnake.Colour(0xffddfd), description=f"*{tit}*")
+        r = tit.replace("The ", "").replace("the ", "")
+        embed = disnake.Embed(title=f"<a:sparkle:894702379851735100> {inter.author.name}'s profile <a:sparkle:894702379851735100>", colour=disnake.Colour(0xffddfd), description=f"*The {string.capwords(r)}*")
 
         # if (inter.author.id == 839842855970275329):
         #     embed.description = "*The Programmer  :computer:*"
         # if (inter.author.id == 667189788620619826):
-        #     embed.description = "*The Designer*"
+        #     embed.description = "*The Designer :video_game:*"
         # if (inter.author.id == 703645091901866044):
         #     embed.description = "*The Artist  :art:*"
         # if (inter.author.id == 643566247337787402):
@@ -912,12 +994,18 @@ async def bal(inter, member=None):
         embed.add_field(name="**Currency**", value=f"<:silvers:889667891044167680> **Silvers :** {balance}\n<:gems:889667936304898079> **Gems :** 0")
         await inter.response.send_message(embed=embed)
     else:
+        try:
+            guilds[str(member.id)]["title"]
+        except:
+            guilds[str(member.id)]["title"] = "The Townie"
+
         if (str(member.id) not in cur):
             cur[str(member.id)] = 0
 
         balance = str(cur[str(member.id)])
         tit = guilds[str(member.id)]["title"]
-        embed = disnake.Embed(title=f"<a:sparkle:894702379851735100> {member.name}'s profile <a:sparkle:894702379851735100>", colour=disnake.Colour(0xffddfd), description=f"*{tit}*")
+        r = tit.replace("The ", "")
+        embed = disnake.Embed(title=f"<a:sparkle:894702379851735100> {member.name}'s profile <a:sparkle:894702379851735100>", colour=disnake.Colour(0xffddfd), description=f"*The {string.capwords(r)}*")
 
         # if (member.id == 839842855970275329):
         #     embed.description = "*The Programmer :computer:*"
@@ -962,7 +1050,7 @@ async def bank(inter):
     ],
 )
 async def give(inter, member=None, amount=None):
-    if (member.bot):
+    if (member.bot == True):
         await inter.response.send_message("You can't give silvers to a bot. Otherwise, how will you get them back?", ephemeral=True)
     else:
         if (amount < 0):
@@ -987,6 +1075,9 @@ async def give(inter, member=None, amount=None):
             
             await inter.response.send_message(embed=embed)
 
+            if (cur[str(member.id)] >= 5000):
+                Achievement.getAch("richPlayer").unlock(member.id, inter.channel, False)
+
             with open('data.json', 'w') as jsonf:
                 json.dump(cur, jsonf)
         else:
@@ -997,6 +1088,11 @@ async def give(inter, member=None, amount=None):
             embed.set_footer(text="Better get more money", icon_url=inter.author.avatar.url)
             await inter.response.send_message(embed=embed, ephemeral=True)
 
+async def addPlayerSilvers(userid, amount):
+    if (str(userid) not in cur):
+        cur[str(userid)] = 0
+
+    cur[str(id)] += amount
 
 @commands.guild_only()
 @bot.slash_command(
@@ -1741,6 +1837,168 @@ async def unequip(inter):
 
 @commands.guild_only()
 @bot.slash_command(
+    name="guessgame",
+    description="Guess a number!",
+    guild_ids=[913544429703405608]
+)
+async def guessgame(inter:ApplicationCommandInteraction):
+    answer = random.randint(1, 10)
+    players = []
+    players.append(inter.author)
+    p1answer = 0
+    p2answer = 0
+
+    class Buttons(disnake.ui.View):
+        def __init__(self):
+            super().__init__()
+            self.value=None
+    
+        @disnake.ui.button(label="1 Player", style=ButtonStyle.blurple, emoji="🧍")
+        async def onep(self, button, interaction):
+            if (interaction.author != inter.author):
+                await interaction.followup.send("No.", ephemeral=True)
+                return
+            self.value="1"
+            self.stop()
+
+        @disnake.ui.button(label="2 Player", style=ButtonStyle.blurple, emoji="🧑‍🤝‍🧑")
+        async def twop(self, button, interaction):
+            if (interaction.author != inter.author):
+                await interaction.followup.send("No.", ephemeral=True)
+                return
+            self.value="2"
+            self.stop()
+    
+    view = Buttons()
+
+    embed = disnake.Embed(title="Guessing Game", colour=disnake.Colour(0x4a90e2), description="There is a number randomly generated from 1 to 10. Try to correctly guess the number to win!\n\nFor now, lets decide how many players are in the game.")
+
+    embed.set_footer(text="Click a button as your input.", icon_url=inter.author.avatar.url)
+    await inter.response.send_message(embed=embed, view=view)
+    await view.wait()
+
+    newview = disable_buttons(view)
+    await inter.edit_original_message(view=newview)
+
+
+
+    if (view.value == "2"):
+        class Join(disnake.ui.View):
+            def __init__(self):
+                super().__init__()
+                self.player=None
+        
+            @disnake.ui.button(label="Join", style=ButtonStyle.green, emoji="👋")
+            async def onep(self, button, interaction):
+                if (interaction.author == inter.author):
+                    return
+                self.value = interaction.author
+                self.stop()
+
+        embed = disnake.Embed(title="Who's the second player?", colour=disnake.Colour(0x4a90e2), description="To play with two players, you have to have another player to play with! The second player will have to click the \"Join\" button at the bottom of this message.")
+        embed.set_footer(text="Click `Join`.", icon_url=inter.author.avatar.url)
+
+        view = Join()
+
+        await inter.followup.send(embed=embed, view=view)
+        await view.wait()
+        
+        newview = disable_buttons(view)
+        await inter.edit_original_message(view=newview)
+
+        players.append(view.value)
+
+        embed = disnake.Embed(title=f"{players[0].name} (Player 1), its your turn!", colour=disnake.Colour(0x4a90e2), description="It's time to guess the number! You can guess by sending a message in chat.")
+
+        embed.set_footer(text="Send a message as your input.", icon_url=players[0].avatar.url)
+        await inter.followup.send(embed=embed)
+        
+        def check(m):
+            return m.author == players[0]
+
+        def closest(lst, number):
+            return lst[min(range(len(lst)), key = lambda i: abs(lst[i]-number))]
+
+        try:
+            message = await bot.wait_for("message", check=check, timeout=60)
+            p1answer = int(message.content)
+
+            embed = disnake.Embed(title=f"{players[1].name} (Player 2), its your turn!", colour=disnake.Colour(0x4a90e2), description="It's time to guess the number! You can guess by sending a message in chat.")
+            embed.set_footer(text="Send a message as your input.", icon_url=players[1].avatar.url)
+
+            await inter.followup.send(embed=embed)
+
+            try:
+
+                message = await bot.wait_for("message", check=check, timeout=60)
+                p2answer = int(message.content)
+
+                answerList:dict = {players[0]: p1answer, players[1]: p2answer}
+                winnernumber = closest(answerList.values(), answer)
+
+                def get_key(val):
+                    for key, value in answerList.items():
+                        if (val == value):
+                            return key
+
+                embed = disnake.Embed(title=f"{get_key(winnernumber).name} wins!", colour=disnake.Colour(0x4a90e2), description="The number was...\n\n")
+
+                embed.set_footer(text="Congratulations!", icon_url=inter.author.avatar.url)
+
+                embed.add_field(name="Answer", value=answer)
+                embed.add_field(name=f"{players[0].name}'s Answer", value=str(p1answer))
+                embed.add_field(name=f"{players[1].name}'s Answer", value=str(p2answer))
+
+                await inter.followup.send(embed=embed)
+
+
+                
+            except asyncio.TimeoutError:
+                embed = disnake.Embed(title=f"The command timed out.", colour=disnake.Colour(0x4a90e2), description="Try running the command again.")
+
+                embed.set_footer(text="Try running the command again.", icon_url=players[0].avatar.url)
+                await inter.followup.send(embed=embed)
+                return
+        except asyncio.TimeoutError:
+            embed = disnake.Embed(title=f"The command timed out.", colour=disnake.Colour(0x4a90e2), description="Try running the command again.")
+
+            embed.set_footer(text="Try running the command again.", icon_url=players[0].avatar.url)
+            await inter.followup.send(embed=embed)
+            return
+        except:
+            embed = disnake.Embed(title=f"There was an invalid input.", colour=disnake.Colour(0x4a90e2), description="Try running the command again.")
+
+            embed.set_footer(text="Try running the command again.", icon_url=players[0].avatar.url)
+            await inter.followup.send(embed=embed)
+            return
+    else:
+
+        def check(m):
+            return m.author.id == players[0].id
+        embed = disnake.Embed(title=f"{players[0].name}, its time to go!", colour=disnake.Colour(0x4a90e2), description="It's time to guess the number! You can guess by sending a message in chat.")
+
+        embed.set_footer(text="Send a message as your input.", icon_url=players[0].avatar.url)
+        await inter.followup.send(embed=embed)
+        message = await bot.wait_for("message", check=check)
+
+
+        embed = disnake.Embed(title="The answer was...", colour=disnake.Colour(0x4a90e2), description=str(answer))
+
+        embed.set_footer(text="Cool!", icon_url=inter.author.avatar.url)
+
+
+def disable_buttons(view: disnake.ui.View):
+    for child in view.children:
+        if isinstance(child, disnake.ui.Button):
+            child.disabled = True
+
+    return view
+
+
+
+
+@commands.guild_only()
+@bot.slash_command(
     name="equip",
     description="Equip an item from your inventory",
     options=[
@@ -1752,8 +2010,15 @@ async def equip(inter, item=None):
         inv[str(inter.author.id)] = {}
 
     realitem = item.lower().replace(" ", "")
-    e = "The " + string.capwords(item)
-    if (realitem not in inv[str(inter.author.id)] and e not in inv[str(inter.author.id)]["titles"]):
+    
+    e = "the " + item.lower()
+    e = demoji.replace(e, "")
+    e = e.strip()
+    titles = []
+    for i in inv[str(inter.author.id)]["titles"]:
+        titles.append(re.sub(r'[^a-zA-Z0-9]', ' ', i.lower()).strip())
+
+    if (realitem not in inv[str(inter.author.id)] and e not in titles):
         await inter.response.send_message("That item isn't in your inventory...", ephemeral=True)
         return
 
@@ -1764,7 +2029,16 @@ async def equip(inter, item=None):
     except:
         pass
 
-    title = e not in inv[str(inter.author.id)]["titles"]
+    
+    def getThing(thing:str):
+        for i in inv[str(inter.author.id)]["titles"]:
+            if (thing in i.lower()):
+                return thing
+
+    tbetitle = getThing(item.lower())
+
+
+    title = e not in titles
 
     try:
         var[inter.guild.id]["test"]
@@ -1776,6 +2050,11 @@ async def equip(inter, item=None):
     except:
         guilds[str(inter.author.id)] = {"guild" : 0, "joinedgame" : False, "equipped" : None, "title" : ""}
 
+    try:
+        guilds[str(inter.author.id)]["title"]
+    except:
+        guilds[str(inter.author.id)]["title"] = ""
+
     theid = ""
     theitem = ""
     emoji = ""
@@ -1785,6 +2064,7 @@ async def equip(inter, item=None):
 
         theid = re.sub("[^0-9]", "", emoji)
     else:
+   
         theitem = string.capwords(realitem)
         theid = "914621157154639923"
 
@@ -1798,10 +2078,62 @@ async def equip(inter, item=None):
     if (title):
         guilds[str(inter.author.id)]["equipped"] = realitem
     else:
-        guilds[str(inter.author.id)]["title"] = e
+        guilds[str(inter.author.id)]["title"] = tbetitle
     
     with open('guilds.json', 'w') as jsonf:
         json.dump(guilds, jsonf)
+
+@commands.guild_only()
+@bot.slash_command(
+    name="achievements",
+    description="View achievements",
+    guild_ids=[753967387149074543]
+)
+async def ach(inter):
+    await inter.response.defer()
+    achievementembed = disnake.Embed(title=f"**{inter.author.name}'s Achievements**", colour=disnake.Colour(0xe3fff2))
+
+    achievementembed.set_thumbnail(url=inter.author.avatar.url)
+
+    achievementembed.add_field(name=f"**Achievements Unlocked :trophy:**", value="** **", inline=False)
+
+    try:
+        guilds[str(inter.author.id)]["achivements"]
+    except:
+        guilds[str(inter.author.id)]["achivements"] = []
+
+    e = False
+
+    for i in guilds[str(inter.author.id)]["achivements"]:
+        e = True
+        achievement = Achievement.getAchById(i)
+        achievementembed.add_field(name=f"**{achievement.name}**", value="**{0}**".format(achievement.description))
+    
+    if (e != True):
+        achievementembed.add_field(":x: **None**", value="** **", inline=False)
+
+    achievementembed.add_field(name=f"**Locked Achievements :x:**", value="** **", inline=False)
+    
+    e = False
+    for i in achivements:
+        if (i.id in guilds[str(inter.author.id)]["achivements"] or i.hidden == True or i.obtainable == False):
+            continue
+
+        e = True            
+        achievementembed.add_field(f"**{i.name}**", value=f"**{i.description}**", inline=False)
+
+    for i in achivements:
+        if (i.id in guilds[str(inter.author.id)]["achivements"] or i.hidden != True or i.obtainable == False):
+            continue
+
+        e = True            
+        achievementembed.add_field(f"**???**", value=f"**???**", inline=False)
+
+    if (e == False):
+        achievementembed.add_field(":trophy: You've unlocked all the achievements!", inline=False)
+    
+    await inter.edit_original_message(embed=achievementembed)
+
 
 @commands.guild_only()
 @bot.slash_command(
@@ -1860,6 +2192,29 @@ async def inventory(inter):
         for i in inv[str(inter.author.id)]["titles"]:
             titleass.add_field(name=f"{i} <:titles:922568821624147999>", value="** **", inline=False)
 
+
+    achievements = disnake.Embed(title=f"**{inter.author.name}'s Inventory**", colour=disnake.Colour(0xe3fff2))
+
+    achievements.set_thumbnail(url=inter.author.avatar.url)
+    achievements.set_footer(text="To view all achievements, use /achievements")
+
+    achievements.add_field(name=f"**Achievements :trophy:**", value="** **", inline=False)
+
+    try:
+        guilds[str(inter.author.id)]["achivements"]
+    except:
+        guilds[str(inter.author.id)]["achivements"] = []
+
+    e = False
+
+    for i in guilds[str(inter.author.id)]["achivements"]:
+        e = True
+        achievement = Achievement.getAchById(i)
+        achievements.add_field(name=f"**{achievement.name}**", value="**{0}**".format(achievement.description))
+    
+    if (e != True):
+        achievements.add_field(":x: **None**", value="** **")
+
     class Dropdown(disnake.ui.Select):
         def __init__(self):
 
@@ -1870,6 +2225,9 @@ async def inventory(inter):
                 ),
                 disnake.SelectOption(
                     label="Titles", description="Check out your titles", value="p2"
+                ),
+                disnake.SelectOption(
+                    label="Achievements", description="Check out your achievements", value="p3"
                 )
             ]
 
@@ -1892,6 +2250,8 @@ async def inventory(inter):
                 emb = copy.copy(embed)
             if (e == "p2"):
                 emb = copy.copy(titleass)
+            if (e == "p3"):
+                emb = copy.copy(achievements)
 
             #r.children[int(e.replace("p", ""))].default = True
 
@@ -1928,7 +2288,7 @@ async def info(inter):
     await inter.response.send_message(embed=embed)
 
 @commands.guild_only()
-@commands.has_role("Lookout (Lvl 3)")
+@dislash.has_role("Lookout (Lvl 3)")
 @bot.slash_command(
     name="game",
     description="Try to get others to play Anarchic",
@@ -1956,7 +2316,7 @@ async def game(inter, message=None):
         Option("role", "Choose a role to get info from", OptionType.string, True)
     ]
 )
-async def rolee(inter:ApplicationCommandInteraction, role:str):
+async def role(inter:ApplicationCommandInteraction, role:str):
     try:
         var[inter.guild.id]["test"]
     except:
@@ -2084,6 +2444,9 @@ async def _join(ctx, interaction=False):
 
     try:
         guilds[str(ctx.author.id)]
+        guilds[str(ctx.author.id)]["joinedgame"]
+        guilds[str(ctx.author.id)]["equipped"]
+        guilds[str(ctx.author.id)]["guild"]
     except:
         guilds[str(ctx.author.id)] = {"guild" : 0, "joinedgame" : False, "equipped" : None}
 
@@ -2160,15 +2523,14 @@ async def _leave(ctx:ApplicationCommandInteraction, inter=False):
     except:
         var[ctx.guild.id] = copy.deepcopy(temp)
 
-    print(ctx.author.id not in var[ctx.guild.id]["players"])
     if (ctx.author.id not in var[ctx.guild.id]["players"]):
         if (inter==True):
             await ctx.response.send_message("You can't leave a lobby you're not in.", ephemeral=True)
         else:
             await ctx.send("You can't leave a lobby you're not in.")
 
+        return
 
-            return
     if (inter == True):
         await ctx.response.defer()
 
@@ -2547,6 +2909,28 @@ async def votebot(inter:ApplicationCommandInteraction):
     await inter.response.send_message(embed=embed, view=VotedButton())
 
     
+@commands.guild_only()
+@bot.slash_command(
+    name="spectate",
+    description="Spectate the current game of Anarchic"
+)
+async def spectate(inter):
+    try:
+        var[inter.guild.id]["test"]
+    except:
+        var[inter.guild.id] = copy.deepcopy(temp)
+
+    guild = var[inter.guild.id]
+    if (guild["started"] == False):
+        await inter.response.send_message("There isn't any game going on right now...", ephemeral=True)
+        return
+    if (inter.author.id in guild["players"]):
+        await inter.response.send_message("You're already in the game. You don't NEED to spectate...", ephemral=True)
+        return
+    
+@bot.command()
+async def sus(ctx):
+    await ctx.send("imagine being sus")
 
 
 @commands.guild_only()
@@ -2668,10 +3052,15 @@ async def _start(ctx:ApplicationCommandInteraction, inter=False):
     if (disnake.utils.get(ctx.guild.roles, name="[Anarchic] Dead") == None):
         await guild.create_role(name="[Anarchic] Dead")
 
+    if (disnake.utils.get(ctx.guild.roles, name="[Anarchic] Spectator") == None):
+        await guild.create_role(name="[Anarchic] Spectator")
+
     for i in var[ctx.guild.id]["players"]:
         role = disnake.utils.get(ctx.guild.roles, name="[Anarchic] Player")
         user = ctx.guild.get_member(i)
         await user.add_roles(role)
+
+    print("---------------")
 
     var[ctx.guild.id]["gday"] = 1
     var[ctx.guild.id]["nightg"] = 1
@@ -2740,6 +3129,15 @@ async def _start(ctx:ApplicationCommandInteraction, inter=False):
     overwrites.send_messages = True
     await die.set_permissions(disnake.utils.get(ctx.guild.roles, name="[Anarchic] Dead"), overwrite=overwrites)
 
+    overwrites.read_messages = True
+    overwrites.send_messages = False
+
+    await die.set_permissions(disnake.utils.get(ctx.guild.roles, name="[Anarchic] Spectator"), overwrite=overwrites)
+
+    overwrites.read_messages = False
+    await chan.set_permissions(disnake.utils.get(ctx.guild.roles, name="[Anarchic] Spectator"), overwrite=overwrites)
+    await maf.set_permissions(disnake.utils.get(ctx.guild.roles, name="[Anarchic] Spectator"), overwrite=overwrites)
+
     var[ctx.guild.id]["channel"] = chan
     await var[ctx.guild.id]["diechannel"].send(embed=embed)    
     await lock(chan)
@@ -2760,7 +3158,7 @@ async def _start(ctx:ApplicationCommandInteraction, inter=False):
 
     await asyncio.sleep(3)
 
-    e = random.randint(1,1000000000)
+    e = time.time()
     random.seed(e)
 
     try:
@@ -3779,43 +4177,9 @@ async def getouttahere(ctx):
         await ctx.send("lmao")
         await ctx.guild.leave()
 
-@commands.guild_only()
-@bot.slash_command(
-    name="dropdowntest",
-    description="wow its a test",
-    guild_ids=[753967387149074543]
-)
-async def dtest(inter:ApplicationCommandInteraction):
-    try:
-        var[inter.guild.id]["test"]
-    except:
-        var[inter.guild.id] = copy.deepcopy(temp)
-
-
-    options = []
-    for i in var[inter.guild.id]["players"]:
-        user = bot.get_user(i)
-        options.append(SelectOption(label=f"{user.name}#{user.discriminator}", description=f"Click here to vote against {user.name}#{user.discriminator}"))
-
-    class DD(disnake.ui.Select):
-        def __init__(self, opt:list):
-            super().__init__(
-                placeholder="Vote someone...",
-                options = opt    
-            )
-
-        async def callback(self, interaction:MessageInteraction):
-            await interaction.response.send_message(self.values[0])
-
-    class DDV(disnake.ui.View):
-        def __init__(self):
-            super().__init__()
-            self.add_item(DD(options))
-
-    await inter.response.send_message("Woohoo, some text here!", view=DDV())
-
 
 async def voteMember(ctx, member):
+  
     try:
         var[ctx.guild.id]["test"]
     except:
@@ -3842,7 +4206,7 @@ async def voteMember(ctx, member):
     if (var[ctx.guild.id]["night"] == True or var[ctx.guild.id]["voting"] == False or var[ctx.guild.id]["gday"] == 1 or var[ctx.guild.id]["started"] == False or var[ctx.guild.id]["novotes"] == True):
         embed = disnake.Embed(title="**Sorry, you can't vote right now.**", colour=disnake.Colour(0xcce0ff), description="**Please vote someone during the allocated time period.**")
 
-        embed.set_thumbnail(url="https://cdn.discordapp.com/attachments/765738640554065962/896419059988578344/downvote.png")
+        embed.set_thumbnail(url="https://cdn.disordapp.com/attachments/765738640554065962/896419059988578344/downvote.png")
         embed.set_footer(text="Type /vote to vote.", icon_url=ctx.author.avatar.url)
         await ctx.response.send_message(embed=embed, ephemeral=True)
         return
@@ -3883,6 +4247,12 @@ async def voteMember(ctx, member):
     embed.set_footer(text=f"{str(int(aliveplayers / 2) + 1)} votes are needed to send someone to trial.", icon_url=ctx.author.avatar.url)
     await ctx.response.send_message(embed=embed)
 
+    var[ctx.guild.id]["votethreads"] += 1
+
+    if (var[ctx.guild.id]["votethreads"] > 1):
+        return
+
+
     if (var[ctx.guild.id]["voted"][int(member.id)] >= int(aliveplayers / 2 + 1)):
         var[ctx.guild.id]["novotes"] = True
         embed = disnake.Embed(title=f"{member.name} has been put on trial.", colour=disnake.Colour(0xfd9f03), description="**You have 20 seconds to defend yourself.**")
@@ -3891,7 +4261,7 @@ async def voteMember(ctx, member):
         embed.set_thumbnail(url=member.avatar.url)
         
         if (var[ctx.guild.id]["night"] == True):
-            await ctx.channel.send("Oh. Yeah. That guy voted. Nothing will happen. This is a fixed bug using this message being sent right now.")
+            await ctx.channel.send("someone voted.")
             return
         await ctx.channel.send(embed=embed)
         await asyncio.sleep(20)
@@ -3990,6 +4360,8 @@ async def voteMember(ctx, member):
             await asyncio.sleep(0.1)
             trialtimer -= 0.1
 
+        var[ctx.guild.id]["votethreads"] -= 1
+
         y = len(var[ctx.guild.id]["guiltyers"])
         x = len(var[ctx.guild.id]["innoers"])
 
@@ -4007,7 +4379,7 @@ async def voteMember(ctx, member):
                     embed.add_field(name="We found a will next to their body :scroll:.", value=getWill(Player.get_player(member.id, var[ctx.guild.id]["playerdict"]).will), inline=False)
 
                 message = ""
-                for i in copy.copy(var[ctx.guild.id]["innoers"]):
+                for i in copy.copy(var[ctx.guild.id]["guiltyers"]):
 
                     if (Player.get_player(i, var[ctx.guild.id]["playerdict"]).id in var[ctx.guild.id]["guiltyers"] == True):
                         continue
@@ -4943,19 +5315,44 @@ async def endGame(ctx:ApplicationCommandInteraction):
                                             neutaward = 5
                                             cur[str(i.id)] += neutaward
 
-                            #Award to each player
-                            for i in var[guild.id]["players"]:
-                                if (str(i) not in cur):
-                                    cur[str(i)] = 0
+                        townsalive = 0
+                        towns = 0
 
+                        #Award to each player
+                        for i in var[guild.id]["players"]:
+                            if (str(i) not in cur):
+                                cur[str(i)] = 0
+                            if (var[guild.id]["setupz"].lower() != "custom"):
                                 if (Player.get_player(i, var[guild.id]["playerdict"]).faction == Faction.Mafia):
                                     cur[str(i)] += mafaward
                                 if (Player.get_player(i, var[guild.id]["playerdict"]).faction == Faction.Town):
                                     cur[str(i)] += townaward
 
+                            if (Player.get_player(i, var[guild.id]["playerdict"]).faction == Faction.Town):
+                                towns += 1
+                                if (Player.get_player(i, var[guild.id]["playerdict"]).dead == False):
+                                      townsalive += 1
 
-                            with open('data.json', 'w') as jsonf:
-                                json.dump(cur, jsonf)
+                            if (cur[str(i)] >= 5000):
+                                await Achievement.getAch("richPlayer").unlock(i, None, True)
+
+                            val = tryGetValue(i, "gamesPlayed")
+                            if (val == None):
+                                val = 0
+
+                            val += 1
+                            if (val == 1):
+                                await Achievement.getAch("firstGame").unlock(i, None, True)
+                            if (val == 1000):
+                                await Achievement.getAch("1000Games").unlock(i, None, True)
+
+                        if (townsalive == towns):
+                            for i in var[guilds.id]["players"]:
+                                if (Player.get_player(i, var[guild.id]["playerdict"]).faction == Faction.Town):
+                                    await Achievement.getAch("nobodyIsDead").unlock(i, None, True)
+
+                        with open('data.json', 'w') as jsonf:
+                            json.dump(cur, jsonf)
 
                         var[guild.id]["started"] = None
                         var[guild.id]["voted"] = None
@@ -4992,8 +5389,10 @@ async def endGame(ctx:ApplicationCommandInteraction):
 
                         g = disnake.utils.get(guild.roles, name="[Anarchic] Player")
                         d = disnake.utils.get(guild.roles, name="[Anarchic] Dead")
+                        s = disnake.utils.get(guild.roles, name="[Anarchic] Spectator")
 
                         await g.delete()
+                        await s.delete()
                         await d.delete()
 
                         for i in var[ctx.guild.id]["joinq"]:
@@ -5046,7 +5445,6 @@ async def endGame(ctx:ApplicationCommandInteraction):
             await ctx.response.send_message("You can't forcibly end a game.", ephemeral=True)
     else:
         if (ctx.author.id == 839842855970275329 or ctx.author.id == 667189788620619826):
-            await ctx.response.defer()
             if (ctx.channel.name == "town-square"):
                 class Buttons(disnake.ui.View):
                     def __init__(self):
@@ -5063,7 +5461,7 @@ async def endGame(ctx:ApplicationCommandInteraction):
                     async def no(self, button, inter):
                         return
 
-                await ctx.edit_original_message(content="This category may not be for Anarchic. Are you sure you want to continue?", view=Buttons())
+                await ctx.response.send_message(content="This category may not be for Anarchic. Are you sure you want to continue?", view=Buttons())
         else:
             try:
                 await ctx.response.send_message("You can't end a non-existent game.", ephemeral=True)
@@ -5104,8 +5502,6 @@ async def ssetup(inter, setup=None):
         await _setup(inter, setup, True)
 
 async def _setup(ctx, setup:str, inter=False):
-
-    print(len(var[ctx.guild.id]["players"]))
     if (len(var[ctx.guild.id]["players"]) == 0):
         await ctx.response.send_message("There's nobody in the game!")
 
@@ -5536,19 +5932,31 @@ async def roles(inter):
     origin.add_field(name="__**Mafia <:maficon2:890328238029697044>**__", value="<:maficon2:891739940055052328> **Mafioso (Maf)**\n<:frameicon2:890365634913902602> **Framer (Frame)**\n<:consicon2:890336628269281350> **Consort (Cons)**")
     origin.add_field(name="__**Neutrals :axe:**__", value="<:hhicon2:891429754643808276> **Headhunter (HH)**\n<:jesticon2:889968373612560394> **Jester (Jest)**")
     
-    current = disnake.Embed(title="**__List of Roles :performing_arts:__**", colour=disnake.Colour(0x8266dc), description="Here are a list of roles that are playable in **Anarchic 1.1.0**.")
+    two = disnake.Embed(title="**__List of Roles :performing_arts:__**", colour=disnake.Colour(0x8266dc), description="Here are a list of roles that are playable in **Anarchic 1.1.0**.")
+
+    two.set_thumbnail(url="https://images-ext-1.discordapp.net/external/S8kYnDiF37aks-RBlGNZVz6gbTasCOJy1R7IB9iE3NQ/%3F5765650006/https/www12.lunapic.com/editor/working/163036526867946112")
+
+    two.add_field(name="__**Town <:townicon2:896431548717473812>**__", value="<:copicon2:889672912905322516> **Cop (Cop)**\n<:deticon2:889673135438319637> **Detective (Det)**\n<:loicon2:889673190392078356> **Lookout (LO)**\n<:docicon2:890333203959787580> **Doctor (Doc)**\n<:enficon2:890339050865696798> **Enforcer (Enf)**\n<:mayoricon:922566007946629131> **Mayor (Mayor)**\n<:psyicon2:896159311078780938> **Psychic (Psy**)")
+    two.add_field(name="__**Mafia <:maficon2:890328238029697044>**__", value="<:maficon2:891739940055052328> **Mafioso (Maf)**\n<:frameicon2:890365634913902602> **Framer (Frame)**\n<:consigicon2:896154845130666084> **Consigliere (Consig)**\n<:consicon2:890336628269281350> **Consort (Cons)**")
+    two.add_field(name="__**Neutrals :axe:**__", value="<:hhicon2:891429754643808276> **Headhunter (HH)**\n<:jesticon2:889968373612560394> **Jester (Jest)**")
+    
+    current = disnake.Embed(title="**__List of Roles :performing_arts:__**", colour=disnake.Colour(0x8266dc), description="Here are a list of roles that are playable in **Anarchic 1.2.0**.")
 
     current.set_thumbnail(url="https://images-ext-1.discordapp.net/external/S8kYnDiF37aks-RBlGNZVz6gbTasCOJy1R7IB9iE3NQ/%3F5765650006/https/www12.lunapic.com/editor/working/163036526867946112")
 
-    current.add_field(name="__**Town <:townicon2:896431548717473812>**__", value="<:copicon2:889672912905322516> **Cop (Cop)**\n<:deticon2:889673135438319637> **Detective (Det)**\n<:loicon2:889673190392078356> **Lookout (LO)**\n<:docicon2:890333203959787580> **Doctor (Doc)**\n<:enficon2:890339050865696798> **Enforcer (Enf)**\n<:mayoricon:922566007946629131> **Mayor (Mayor)**\n<:psyicon2:896159311078780938> **Psychic (Psy**)")
-    current.add_field(name="__**Mafia <:maficon2:890328238029697044>**__", value="<:maficon2:891739940055052328> **Mafioso (Maf)**\n<:frameicon2:890365634913902602> **Framer (Frame)**\n<:consigicon2:896154845130666084> **Consigliere (Consig)**\n<:consicon2:890336628269281350> **Consort (Cons)**")
-    current.add_field(name="__**Neutrals :axe:**__", value="<:hhicon2:891429754643808276> **Headhunter (HH)**\n<:jesticon2:889968373612560394> **Jester (Jest)**")
+    current.add_field(name="__**Town <:townicon2:896431548717473812>**__", value="<:copicon2:889672912905322516> **Cop (Cop)**\n<:deticon2:889673135438319637> **Detective (Det)**\n<:loicon2:889673190392078356> **Lookout (LO)**\n<:docicon2:890333203959787580> **Doctor (Doc)**\n<:enficon2:890339050865696798> **Enforcer (Enf)**\n<:mayoricon:922566007946629131> **Mayor (Mayor)**\n<:psyicon2:896159311078780938> **Psychic (Psy)**\n<:trackicon:922885543812005949> **Tracker (Track)**\n<:lego:939315708146372658> **Attendant (Att)**")
+    current.add_field(name="__**Mafia <:maficon2:890328238029697044>**__", value="<:maficon2:891739940055052328> **Mafioso (Maf)**\n<:frameicon2:890365634913902602> **Framer (Frame)**\n<:consigicon2:896154845130666084> **Consigliere (Consig)**\n<:consicon2:890336628269281350> **Consort (Cons)**\n<:janiicon:923219547325091840> **Janitor (Jani)**")
+    current.add_field(name="__**Neutrals :axe:**__", value="<:hhicon2:891429754643808276> **Headhunter (HH)**\n<:jesticon2:889968373612560394> **Jester (Jest)**\n<:psychoicon:922564838897627166> **Psychopath (Psycho)**")
     
+
     class Dropdown(disnake.ui.Select):
         def __init__(self):
 
             # Set the options that will be presented inside the dropdown
             options = [
+                disnake.SelectOption(
+                    label="1.2.0", description="Check out the roles in Anarchic 1.2.0", value="120", emoji='<:psychoicon:922564838897627166>'
+                ),
                 disnake.SelectOption(
                     label="1.1.0", description="Check out the roles in Anarchic 1.1.0", value="110", emoji='<:consigicon2:896154845130666084>'
                 ),
@@ -5572,10 +5980,12 @@ async def roles(inter):
 
             emb = None
 
-            if (e == "110"):
+            if (e == "120"):
                 emb = copy.copy(current)
             if (e == "100"):
                 emb = copy.copy(origin)
+            if (e == "110"):
+                emb = copy.copy(two)
 
             #r.children[int(e.replace("p", ""))].default = True
 
@@ -5645,7 +6055,7 @@ async def cows(ctx):
 
 #utils
 async def lock(channel, maf=False):
-    if (maf):
+    if (maf == True):
         overwrite = disnake.PermissionOverwrite()
         overwrite.send_messages = False
         overwrite.read_messages = True
@@ -5668,25 +6078,27 @@ async def unlock(channel, maf=False):
     overwrite.send_messages = False
     overwrite.read_messages = True
 
-    for i in var[channel.guild.id]["players"]:
-        user = await channel.guild.fetch_member(i)
-        if (Player.get_player(i, var[channel.guild.id]["playerdict"]).faction == Faction.Mafia and maf == True):
+    if (maf == True):
+        for i in var[channel.guild.id]["players"]:
+            user = await channel.guild.fetch_member(i)
+            if (Player.get_player(i, var[channel.guild.id]["playerdict"]).faction == Faction.Mafia):
                 overwrite.send_messages = True
                 overwrite.read_messages = True
-                continue
-        elif (Player.get_player(i, var[channel.guild.id]["playerdict"]).faction != Faction.Mafia and maf == True):
-                overwrite.send_messages = False
-                overwrite.read_messages = False
-                continue
 
-        if (Player.get_player(i, var[channel.guild.id]["playerdict"]).dead == True):
-            overwrite.send_messages = False
-            overwrite.read_messages = True
-            await channel.set_permissions(user, overwrite=overwrite)
-        else:
-            overwrite.send_messages = True
-            overwrite.read_messages = True
-            await channel.set_permissions(user, overwrite=overwrite)
+                await channel.set_permissions(user, overwrite=overwrite)
+
+    else:
+        for i in var[channel.guild.id]["players"]:
+            user = await channel.guild.fetch_member(i)
+
+            if (Player.get_player(i, var[channel.guild.id]["playerdict"]).dead == True):
+                overwrite.send_messages = False
+                overwrite.read_messages = True
+                await channel.set_permissions(user, overwrite=overwrite)
+            else:
+                overwrite.send_messages = True
+                overwrite.read_messages = True
+                await channel.set_permissions(user, overwrite=overwrite)
 
 async def completeunlock(channel):
     overwrite = disnake.PermissionOverwrite()
@@ -5700,6 +6112,7 @@ async def completeunlock(channel):
 async def assignroles(comp:str, ctx):
     c = []
     my = []
+    setup = []
 
     if (comp.lower() == "any"):
         for _ in range(len(var[ctx.id]["players"])):
@@ -5815,7 +6228,12 @@ async def assignroles(comp:str, ctx):
                                 break
 
             elif (hisrole == "RM"):
-                hisrole = random.choice(var[ctx.id]["mafias"])
+                while True:
+                    hisrole = random.choice(var[ctx.id]["mafias"])
+                    if (hisrole in var[ctx.id]["uniques"] and hisrole in setup):
+                        continue
+
+                    break
             elif (hisrole == "RC"):
                 hisrole = random.choice(var[ctx.id]["cults"])
             elif (hisrole == "RN"):
@@ -5844,9 +6262,10 @@ async def assignroles(comp:str, ctx):
 
             idd = "p" + str(id)
             ll = hisrole.lower()
+            setup.append(hisrole)
 
 
-            if (ll == "mafioso" or ll == "consigliere" or ll == "framer" or ll == "consort"):
+            if (ll in var[ctx.id]["mafias"]):
                 mafs += 1
             
             if (ll == "mafioso"):
@@ -5883,8 +6302,20 @@ async def assignroles(comp:str, ctx):
 
                 if (play.role.lower() != "mayor" and string.capwords(play.role) in var[ctx.id]["towns"] and i.hhtarget == None):
                     i.hhtarget = play.id
-                    user = bot.get_user(i.id)
-                    targetembed = disnake.Embed(title=f"**Your target is {bot.get_user(play.id).name}#{bot.get_user(play.id).discriminator}.**", colour=disnake.Colour(0x39556b), description="Your target has called you \"Bad at Anarchic\" and now it's time for them to pay. Get them lynch in order to win.")
+
+                    badmessages = ["has called you \"Bad at Anarchic\"",
+                    "has bullied you",
+                    "played Fortnite",
+                    "ate chocolate pizza",
+                    "has threw", 
+                    "has wronged you", 
+                    "played Fall Guys", 
+                    "watched amogus drip", 
+                    "got you lynched when you were revealed mayor", 
+                    "killed you as Mafia",
+                    "said no"]
+
+                    targetembed = disnake.Embed(title=f"**Your target is {bot.get_user(play.id).name}#{bot.get_user(play.id).discriminator}.**", colour=disnake.Colour(0x39556b), description=f"Your target {random.choice(badmessages)} and now it's time for them to pay. Get them lynched in order to win.")
 
                     targetembed.set_thumbnail(url=bot.get_user(play.id).avatar.url)
                     targetembed.set_footer(text="If your target dies at night, you will be converted into a Jester.", icon_url=bot.get_user(i.id).avatar.url)
@@ -6136,7 +6567,7 @@ async def bootyfulembed(roled:str, author, player:Player=None):
             embed = disnake.Embed(title="**Your role is Consort**", colour=disnake.Colour(0xd0021b), description="A hooker who works for organized crime")
 
             embed.set_image(url="https://media.discordapp.net/attachments/879064140285620315/882069060517503006/unknown.png?width=309&height=468")
-            embed.set_thumbnail(url="https://cdn.discordapp.com/emojis/873954973556293632.png?v=1")
+            embed.set_thumbnail(url="https://cdn.discordapp.com/emojis/890336628269281350.webp?size=80&quality=lossless")
             embed.set_footer(text="Mafia Support 🧲", icon_url=author.avatar.url)
 
             embed.add_field(name="**Atk ⚔️:**", value="None", inline=True)
@@ -6283,6 +6714,8 @@ async def bootyfulembed(roled:str, author, player:Player=None):
         embed.set_footer(text=f"For debugging: the role was {roled}")
         return embed
 
+
+
 async def check(e:disnake.User, guild):
     for value in var[guild]["playerdict"].values():
         if (value.id == e.id):
@@ -6363,6 +6796,12 @@ async def nighttargets(ctx):
                     continue                    
             await results(bot.get_user(i), var[ctx]["targets"][i], ctx)
     for i in var[ctx]["targets"].keys():
+        if (Player.get_player(i, var[ctx]["playerdict"]).role.lower() == "psychic"):
+            if (Player.get_player(i, var[ctx]["playerdict"]).dead == True):
+                if (Player.get_player(i, var[ctx]["playerdict"]).diedln == False):
+                    continue                    
+            await results(bot.get_user(i), var[ctx]["targets"][i], ctx)
+    for i in var[ctx]["targets"].keys():
         if (Player.get_player(i, var[ctx]["playerdict"]).role.lower() == "consigliere"):
             if (Player.get_player(i, var[ctx]["playerdict"]).dead == True):
                 if (Player.get_player(i, var[ctx]["playerdict"]).diedln == False):
@@ -6408,6 +6847,12 @@ async def nighttargets(ctx):
     for i in var[ctx]["targets"].keys():
         if (Player.get_player(i, var[ctx]["playerdict"]).role.lower() == "janitor"):
             await results(bot.get_user(i), var[ctx]["targets"][i], ctx)
+    for i in var[ctx]["targets"].keys():
+        if (Player.get_player(i, var[ctx]["playerdict"]).role.lower() == "headhunter"):
+            if (Player.get_player(i, var[ctx]["playerdict"]).dead == True):
+                if (Player.get_player(i, var[ctx]["playerdict"]).diedln == False):
+                    continue                    
+            await results(bot.get_user(i), var[ctx]["targets"][i], ctx)
 
     await asyncio.sleep(4)
     asyncio.create_task(day(var[ctx]["channel"]))
@@ -6440,7 +6885,7 @@ async def results(ctx, targ, g):
             var[g]["targets"][ctx.id] = 0
             embed = disnake.Embed(title="**You feel too guilty to do anything tonight.**", colour=disnake.Colour(0xffc3e7))
 
-            embed.set_thumbnail(url="https://images-ext-2.discordapp.net/external/F8o5Mi5dYJDvkfQ3B98JCbUYmdmdnupZQyNa2wXpEBk/https/media.discordapp.net/attachments/765738640554065962/872147798336893019/imageedit_4_4906520050.png")
+            embed.set_thumbnail(url="https://cdn.discordapp.com/emojis/889968373612560394.png?size=80")
             embed.set_footer(text="Shouldn't lynch the Jester.", icon_url=ctx.avatar.url)     
 
             await ctx.send(embed=embed)
@@ -6450,7 +6895,7 @@ async def results(ctx, targ, g):
         var[g]["targets"][ctx.id] = 0
         embed = disnake.Embed(title="**Somebody Distracted :revolving_hearts: you last night, so you did not perform your night ability.**", colour=disnake.Colour(0xb6d4ff))
 
-        embed.set_thumbnail(url="https://cdn.discordapp.com/emojis/873954973556293632.png?v=1")
+        embed.set_thumbnail(url="https://cdn.discordapp.com/emojis/890336628269281350.webp?size=80&quality=lossless")
         embed.set_footer(text="Gotta stay focused.", icon_url=ctx.avatar.url)
         await ctx.send(embed=embed)
         return
@@ -6612,27 +7057,43 @@ async def results(ctx, targ, g):
                 await ctx.send(embed=embed)
                 mister.append(int(key))
     elif (role == "tracker"):
-        visited = var[g]["targets"][int(targ)]
-        if (visited != 0 and Player.get_player(int(targ), var[g]["playerdict"]).distraction == False):
-            user = bot.get_user(int(var[g]["targets"][targ]))
-            embed = None	
+        try:
+            visited = var[g]["targets"][int(targ)]
+            if (Player.get_player(int(targ), var[g]["playerdict"]).framed == True and var[g]["maftarget"] != 0):
+                theuser = bot.get_user(var[g]["maftarget"])
 
-            if (user != None):
-                embed = disnake.Embed(title=f"**Your target visited {user.name} last night!**", colour=disnake.Colour(0x7ed321))
-            else:
-                embed = disnake.Embed(title="**Your target visited *someone* last night...**", colour = disnake.Colour(0x7ed321))
+                if (theuser != None):
+                    embed = disnake.Embed(title=f"**Your target visited {theuser.name} last night!**", colour=disnake.Colour(0x7ed321))
+                    embed.set_thumbnail(url=theuser.avatar.url)
+                else:
+                    embed = disnake.Embed(title="**Your target visited *someone* last night...**", colour = disnake.Colour(0x7ed321))
 
-            embed.set_thumbnail(url=user.avatar.url)
-            embed.set_footer(text="What were they doing there?", icon_url=ctx.avatar.url)
-            await ctx.send(embed=embed)
+            
+                embed.set_footer(text="What were they doing there?", icon_url=ctx.avatar.url)
+                await ctx.send(embed=embed)
+            elif (visited != 0 and Player.get_player(int(targ), var[g]["playerdict"]).distraction == False):
+                user = bot.get_user(int(var[g]["targets"][targ]))
+                embed = None	
+
+                if (user != None):
+                    embed = disnake.Embed(title=f"**Your target visited {user.name} last night!**", colour=disnake.Colour(0x7ed321))
+                else:
+                    embed = disnake.Embed(title="**Your target visited *someone* last night...**", colour = disnake.Colour(0x7ed321))
+
+                embed.set_thumbnail(url=user.avatar.url)
+                embed.set_footer(text="What were they doing there?", icon_url=ctx.avatar.url)
+                await ctx.send(embed=embed)
+        except Exception as e:
+            print(e)
+            return
     elif (role == "consort" or role == "attendant"):
         if (Player.get_player(targ, var[g]["playerdict"]).role == "Psychopath" and Player.get_player(targ, var[g]["playerdict"]).cautious == False):
             k = Player.get_player(ctx.id, var[g]["playerdict"])
             k.dead = True
-            k.deathreason.append(DeathReason.Psychopath)
+            k.death.append(DeathReason.Psychopath)
             k.will = []
             k.will.append("Their last will was too bloody to be read.")
-
+           
             embed = disnake.Embed(title="**You were stabbed by the **Psychopath <:psychoicon:909908333635440680>** you distracted.", colour=disnake.Colour(0x4a90e2), description="**You have died :rip:.**")
 
             embed.set_thumbnail(url="https://discord.com/assets/9f89170e2913a534d3dc182297c44c87.svg")
@@ -6648,10 +7109,7 @@ async def results(ctx, targ, g):
             member:disnake.Member = var[g]["guildg"].get_member(targ)
             await member.add_roles(disnake.utils.get(var[g]["guildg"].roles, name="[Anarchic] Dead"))
             await member.remove_roles(disnake.utils.get(var[g]["guildg"].roles, name="[Anarchic] Player"))
-            Player.get_player(targ, var[g]["playerdict"]).diedln = True
-            Player.get_player(targ, var[g]["playerdict"]).dead = True
-            Player.get_player(targ, var[g]["playerdict"]).death.append(DeathReason.JesterGuilt)
-            
+            await haunt(member, g)            
             embed = disnake.Embed(title="**You were haunted by the Jester <:jesticon2:889968373612560394>.**", colour=disnake.Colour(0xffc3e7), description="**You have died <:rip:872284978354978867>.**")
 
             embed.set_thumbnail(url="https://media.discordapp.net/attachments/765738640554065962/895419320140693584/export.png?width=396&height=408")
@@ -6817,6 +7275,7 @@ async def results(ctx, targ, g):
 
     var[g]["resul"] -= 1
 
+#Main function for targeting embeds
 async def target(ctx:disnake.User, r):
     try:
         var[r]["isresults"] = False
@@ -6849,7 +7308,12 @@ async def target(ctx:disnake.User, r):
 
             embed.description = "**Your targets are...**"
             embed.set_thumbnail(url="https://media.discordapp.net/attachments/765738640554065962/871524614914834432/IconCop-removebg-preview.png")
-            embed.set_image(url="https://media.discordapp.net/attachments/765738640554065962/871511037743071232/unknown.png?width=677&height=634")
+            
+            if (random.randint(1, 50) == 47):
+                embed.set_image(url="https://media.discordapp.net/attachments/887803391466680360/943672619176169472/LOL.png?width=480&height=485")
+            else:
+                embed.set_image(url="https://media.discordapp.net/attachments/765738640554065962/871511037743071232/unknown.png?width=677&height=634")
+            
             embed.set_footer(text="React with who you want to interrogate.", icon_url=ctx.avatar.url)
             b = await ctx.send(embed=embed)
 
@@ -6888,7 +7352,7 @@ async def target(ctx:disnake.User, r):
             
             af = 0
             max = 0
-            for value in var[r]["playerdict"].values():
+            for key, value in var[r]["playerdict"].items():
                 if (value.id != 0 and value.dead == False):
                     max += 1
                 else:
@@ -6923,7 +7387,7 @@ async def target(ctx:disnake.User, r):
 
             embed.description = "**Your targets are...**"
             embed.set_thumbnail(url="https://media.discordapp.net/attachments/765738640554065962/871524614914834432/IconCop-removebg-preview.png")
-            embed.set_image(url="https://media.discordapp.net/attachments/765738640554065962/871511037743071232/unknown.png?width=677&height=634")
+            embed.set_image(url="https://media.discordapp.net/attachments/765738640554065962/926296181192163368/unknown.png")
             embed.set_footer(text="React with who you want to track.", icon_url=ctx.avatar.url)
             b = await ctx.send(embed=embed)
 
@@ -6982,6 +7446,7 @@ async def target(ctx:disnake.User, r):
             else:
                 return
         elif (role == "mafioso"):
+            var[r]["maftarget"] = 0
             message = "**Your targets are...**"
             embed = disnake.Embed(title="**Who would you like to attack tonight?**", colour=disnake.Colour(0xd0021b), description="**Your targets are...**")
 
@@ -7020,6 +7485,7 @@ async def target(ctx:disnake.User, r):
                 embed.set_thumbnail(url=targetuser.avatar.url)
                 embed.set_footer(text="Please wait for other players to choose their action.", icon_url=ctx.avatar.url)
                 Player.get_player(ctx.id, var[r]["playerdict"]).ready = True
+                var[r]["maftarget"] = target
                         
                 
 
@@ -7063,81 +7529,84 @@ async def target(ctx:disnake.User, r):
             else:
                 return
         elif (role == "janitor"):
-            message = "**Your targets are...**"
-            embed = disnake.Embed(title="**Who would you like to clean tonight?**", colour=disnake.Colour(0xd0021b), description="**Your targets are...**")
+            if (Player.get_player(ctx.id, var[r]["playerdict"]).charges > 0):
+                message = "**Your targets are...**"
+                embed = disnake.Embed(title="**Who would you like to clean tonight?**", colour=disnake.Colour(0xd0021b), description="**Your targets are...**")
 
-            embed.set_image(url="https://cdn.discordapp.com/attachments/765738640554065962/916689134377140254/unknown.png")
-            embed.set_thumbnail(url="https://media.discordapp.net/attachments/765738640554065962/897585492562964531/MafIcon2.png?width=676&height=676")
-            embed.set_footer(text="React with who you want to attack.", icon_url=ctx.avatar.url)
-            for key, value in var[r]["playeremoji"].items():
-                if (value == ctx.id or Player.get_player(value, var[r]["playerdict"]).dead == True or Player.get_player(value, var[r]["playerdict"]).faction == Faction.Mafia):
-                    continue
-                else:
-                    user:disnake.User = bot.get_user(value)
-                    embed.add_field(name=f"{key} - {user.name}#{user.discriminator} :dagger:", value="** **", inline=False)
+                embed.set_image(url="https://cdn.discordapp.com/attachments/765738640554065962/916689134377140254/unknown.png")
+                embed.set_thumbnail(url="https://media.discordapp.net/attachments/765738640554065962/897585492562964531/MafIcon2.png?width=676&height=676")
+                embed.set_footer(text="React with who you want to attack.", icon_url=ctx.avatar.url)
+                for key, value in var[r]["playeremoji"].items():
+                    if (value == ctx.id or Player.get_player(value, var[r]["playerdict"]).dead == True or Player.get_player(value, var[r]["playerdict"]).faction == Faction.Mafia):
+                        continue
+                    else:
+                        user:disnake.User = bot.get_user(value)
+                        embed.add_field(name=f"{key} - {user.name}#{user.discriminator} :dagger:", value="** **", inline=False)
 
-            b = await ctx.send(embed=embed)
+                b = await ctx.send(embed=embed)
 
-            for key, value in var[r]["playeremoji"].items():
-                        if (value == ctx.id or Player.get_player(value, var[r]["playerdict"]).dead == True or Player.get_player(value, var[r]["playerdict"]).faction == Faction.Mafia):
-                            continue
-                        else:
-                            await b.add_reaction(key)
+                for key, value in var[r]["playeremoji"].items():
+                            if (value == ctx.id or Player.get_player(value, var[r]["playerdict"]).dead == True or Player.get_player(value, var[r]["playerdict"]).faction == Faction.Mafia):
+                                continue
+                            else:
+                                await b.add_reaction(key)
 
-            reactions = b.reactions        
-            def check(reaction:Reaction, user):
-                    return user.id == ctx.id and str(reaction.emoji) in var[r]["emojis"]  
+                reactions = b.reactions        
+                def check(reaction:Reaction, user):
+                        return user.id == ctx.id and str(reaction.emoji) in var[r]["emojis"]  
 
-            try:
-                reaction, user = await bot.wait_for('reaction_add', check=check, timeout=30)
-                target = var[r]["playeremoji"][reaction.emoji]
-                var[r]["targets"][ctx.id] = target
-                targetuser:disnake.User = bot.get_user(target)
-                embed = disnake.Embed(title=f"**You have decided to clean {targetuser.name} tonight.**", colour=disnake.Colour(0xd0021b))
+                try:
+                    reaction, user = await bot.wait_for('reaction_add', check=check, timeout=30)
+                    target = var[r]["playeremoji"][reaction.emoji]
+                    var[r]["targets"][ctx.id] = target
+                    targetuser:disnake.User = bot.get_user(target)
+                    embed = disnake.Embed(title=f"**You have decided to clean {targetuser.name} tonight.**", colour=disnake.Colour(0xd0021b))
 
-                embed.set_thumbnail(url=targetuser.avatar.url)
-                embed.set_footer(text="Please wait for other players to choose their action.", icon_url=ctx.avatar.url)
-                Player.get_player(ctx.id, var[r]["playerdict"]).ready = True
-                        
+                    embed.set_thumbnail(url=targetuser.avatar.url)
+                    embed.set_footer(text="Please wait for other players to choose their action.", icon_url=ctx.avatar.url)
+                    Player.get_player(ctx.id, var[r]["playerdict"]).ready = True
+                            
+                    
+
+                    await ctx.send(embed=embed)
+
+                    embed = disnake.Embed(title=f"**{ctx.name} has decided to clean {targetuser.name}#{targetuser.discriminator} tonight.**", colour=disnake.Colour(0xd0021b))
+
+                    embed.set_thumbnail(url="https://cdn.discordapp.com/emojis/891739940055052328.png?size=80")
+                    await var[r]["mafcon"].send(embed=embed)
                 
+                except asyncio.TimeoutError:
+                    var[r]["targets"][ctx.id] = 0
+                    embed = disnake.Embed(title="**You did not perform your night ability.**", colour=disnake.Colour(0xd3d3d3))
 
-                await ctx.send(embed=embed)
+                    embed.set_thumbnail(url="https://images-ext-2.discordapp.net/external/Jo6YKDv-BLtSsARJpe3YIU1BE6i6PUeref_J5iLJCLA/%3F5084118588/https/www5.lunapic.com/editor/working/162949230098060059")
+                    embed.set_footer(text="Accidental? Or intentional?", icon_url=ctx.avatar.url)
+                    await ctx.send(embed=embed)
+                    Player.get_player(ctx.id, var[r]["playerdict"]).ready = True
 
-                embed = disnake.Embed(title=f"**{ctx.name} has decided to clean {targetuser.name}#{targetuser.discriminator} tonight.**", colour=disnake.Colour(0xd0021b))
+                    embed = disnake.Embed(title=f"**{ctx.name} did not preform their night ability.**", colour=disnake.Colour(0xd0021b))
 
-                embed.set_thumbnail(url="https://cdn.discordapp.com/emojis/891739940055052328.png?size=80")
-                await var[r]["mafcon"].send(embed=embed)
-            
-            except asyncio.TimeoutError:
-                var[r]["targets"][ctx.id] = 0
-                embed = disnake.Embed(title="**You did not perform your night ability.**", colour=disnake.Colour(0xd3d3d3))
-
-                embed.set_thumbnail(url="https://images-ext-2.discordapp.net/external/Jo6YKDv-BLtSsARJpe3YIU1BE6i6PUeref_J5iLJCLA/%3F5084118588/https/www5.lunapic.com/editor/working/162949230098060059")
-                embed.set_footer(text="Accidental? Or intentional?", icon_url=ctx.avatar.url)
-                await ctx.send(embed=embed)
-                Player.get_player(ctx.id, var[r]["playerdict"]).ready = True
-
-                embed = disnake.Embed(title=f"**{ctx.name} did not preform their night ability.**", colour=disnake.Colour(0xd0021b))
-
-                embed.set_thumbnail(url="https://cdn.discordapp.com/emojis/891739940055052328.png?size=80")
-                await var[r]["mafcon"].send(embed=embed)
+                    embed.set_thumbnail(url="https://cdn.discordapp.com/emojis/891739940055052328.png?size=80")
+                    await var[r]["mafcon"].send(embed=embed)
 
 
 
-            af = 0
-            max = 0
-            for value in var[r]["playerdict"].values():
-                if (value.id != 0 and value.dead == False):
-                    max += 1
+                af = 0
+                max = 0
+                for value in var[r]["playerdict"].values():
+                    if (value.id != 0 and value.dead == False):
+                        max += 1
 
-            for value in var[r]["playerdict"].values():
-                if (value.ready == True and value.dead == False):
-                    af += 1
+                for value in var[r]["playerdict"].values():
+                    if (value.ready == True and value.dead == False):
+                        af += 1
 
-            if (af >= max):
-                var[r]["isresults"] = True
-                await nighttargets(r)
-                return
+                if (af >= max):
+                    var[r]["isresults"] = True
+                    await nighttargets(r)
+                    return
+                else:
+                    return
             else:
                 return
         elif (role == "psychopath"):
@@ -7652,13 +8121,7 @@ async def target(ctx:disnake.User, r):
                 reactions = b.reactions
 
                 def check(reaction:Reaction, user):
-                    isReact = False
-                    for i in reactions:
-                        if (i == reaction):
-                            isReact = True
-                    
-
-                    return user.id == ctx.id and str(reaction.emoji) in var[r]["emojis"] and isReact == True
+                    return user.id == ctx.id and str(reaction.emoji) in var[r]["emojis"]
 
                 try:
                     reaction, user = await bot.wait_for('reaction_add', check=check, timeout=30)
@@ -7670,7 +8133,7 @@ async def target(ctx:disnake.User, r):
                     embed.set_thumbnail(url=targetuser.avatar.url)
                     embed.set_footer(text="Please wait for other players to choose their action.", icon_url=ctx.avatar.url)
                     Player.get_player(ctx.id, var[r]["playerdict"]).ready = True
-                            
+
                     await ctx.send(embed=embed)
                 except asyncio.TimeoutError:
                     tcf = []
@@ -8134,7 +8597,7 @@ async def attack(me, member:disnake.User, ctx, attack:Attack):
                             if (stronger(Player.get_player(i, var[ctx]["playerdict"]).defense, Attack.Default)):
                                 k = Player.get_player(member.id, var[ctx]["playerdict"])
                                 k.dead = True
-                                k.deathreason.append(DeathReason.Psychopath)
+                                k.death.append(DeathReason.Psychopath)
                                 k.will = []
                                 k.will.append("Their last will was too bloody to be read.")
 
@@ -8175,7 +8638,7 @@ async def attack(me, member:disnake.User, ctx, attack:Attack):
                         if (Player.get_player(me, var[ctx]["playerdict"]).role == "Psychopath" and Player.get_player(me, var[ctx]["playerdict"]).cautious == False):
                             k = Player.get_player(member.id, var[ctx]["playerdict"])
                             k.dead = True
-                            k.deathreason.append(DeathReason.Psychopath)
+                            k.death.append(DeathReason.Psychopath)
                             k.will = []
                             k.will.append("Their last will was too bloody to be read.")
 
@@ -8232,6 +8695,7 @@ async def daily(inter):
 async def haunt(player:disnake.Member, guild):
     play = Player.get_player(player.id, var[guild]["playerdict"])
     play.dead = True
+    play.death.append(DeathReason.JesterGuilt)
     play.diedln = True
 
 @bot.command()
@@ -8241,25 +8705,6 @@ async def lmao(ctx):
 @bot.command()
 async def ROFL(ctx):
     await ctx.send("https://cdn.discordapp.com/attachments/765738640554065962/913958133137829928/IMG_0100.png")
-
-@bot.command()
-async def cryat(ctx, bad):
-    global badtemp
-    global badcet
-    if (bad == "temp"):
-        if (badtemp == True):
-            badtemp = False
-        else:
-            badtemp = True
-
-        await ctx.send(f"Temp has been set to {str(badtemp)}.")
-    if (bad == "cet"):
-        if (badcet == True):
-            badcet = False
-        else:
-            badcet = True
-
-        await ctx.send(f"Cet has been set to {str(badcet)}.")
 
 @bot.event
 async def on_message(message:disnake.Message):
@@ -8271,15 +8716,6 @@ async def on_message(message:disnake.Message):
                 var[message.guild.id] = copy.deepcopy(temp)
             except:
                 pass
-
-    if (message.author.id == 703645091901866044 and badtemp == True): #Check if the user is Tempoary_Virus19
-        await message.delete() #Delete the message
-        return
-
-    if (message.author.id == 839842855970275329 and badcet == True): #Check if the user is Tempoary_Virus19
-        await message.delete() #Delete the message
-        return
-
 
     await bot.process_commands(message)
             
@@ -8293,7 +8729,7 @@ async def supergive(ctx, user:disnake.Member, amount):
 
         cur[str(user.id)] += int(amount)
 
-        embed = disnake.Embed(title=f"**Successfully given {user.name}#{user.discriminator} __{amount}__ silvers <:silvers:889667891044167680>!**", colour=disnake.Colour(0xffdffe), description=f"You now have __idk 69????__ silvers <:silvers:889667891044167680> .")
+        embed = disnake.Embed(title=f"**Successfully supergave {user.name}#{user.discriminator} __{amount}__ silvers <:silvers:889667891044167680>!**", colour=disnake.Colour(0xffdffe), description=f"Have fun with your silvers <:silvers:889667891044167680> .")
 
         embed.set_thumbnail(url="https://cdn.discordapp.com/emojis/889667891044167680.png?size=96")
         embed.set_footer(text="Thank you!", icon_url=ctx.author.avatar.url)
@@ -8308,6 +8744,6 @@ async def supergive(ctx, user:disnake.Member, amount):
 
 
 try:
-    bot.run(config.TOKEN)
+    bot.run("ODg3MTE4MzA5ODI3NDMyNDc4.YT_fTg.ifiDTxpdKyu9_1Lrlhi7lBX4qUQ")
 except aiohttp.client_exceptions.ClientConnectorError:
-    print("Internet Error")
+    print("when you realize the wifi failed")
